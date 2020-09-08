@@ -1,0 +1,32 @@
+C51 COMPILER V9.60.0.0   MAIN                                                              05/14/2020 11:50:52 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\src\Main.OBJ
+COMPILER INVOKED BY: c:\SiliconLabs\SimplicityStudio\v4\developer\toolchains\keil_8051\9.60\BIN\C51.exe C:\Users\Adminis
+                    -trator\Desktop\workspace\X30\HCXY_X30_EFM8BB21F16G-C-QFN20_正常探芯\src\Main.c OMF2 LARGE DEBUG OBJECTEXTEND ROM(LARGE) 
+                    -WARNINGLEVEL(2) FLOATFUZZY(3) OPTIMIZE(8,SPEED) DEFINE(DEBUG=1) INTVECTOR(0X0000) INTPROMOTE INCDIR(C:\Users\Administrat
+                    -or\Desktop\workspace\X30\HCXY_X30_EFM8BB21F16G-C-QFN20_正常探芯\inc;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/80
+                    -51/v4.1.7//Device/shared/si8051base;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/EFM8BB2/inc) P
+                    -RINT(.\src\Main.lst) COND PAGEWIDTH(120) PAGELENGTH(65) OBJECT(.\src\Main.OBJ)
+
+line level    source
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    199    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     11    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

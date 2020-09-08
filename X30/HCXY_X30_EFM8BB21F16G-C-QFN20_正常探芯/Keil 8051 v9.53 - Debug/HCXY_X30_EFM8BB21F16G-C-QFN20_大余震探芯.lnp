@@ -1,0 +1,13 @@
+"./src/Adc.OBJ",
+"./src/Command.OBJ",
+"./src/Cpu.OBJ",
+"./src/DetectObj.OBJ",
+"./src/EFM8BB2_FlashPrimitives.OBJ",
+"./src/InitDevice.OBJ",
+"./src/Main.OBJ",
+"./src/SILABS_STARTUP.OBJ",
+"./src/Speaker.OBJ",
+"./src/Timer.OBJ",
+"./src/Uart.OBJ",
+"./src/UartCfg.OBJ"
+TO "HCXY_X30_EFM8BB21F16G-C-QFN20_¥Û”‡’ÃΩ–æ.OMF.CRBUILD" REMOVEUNUSED PRINT(.\HCXY_X30_EFM8BB21F16G-C-QFN20_¥Û”‡’ÃΩ–æ.m51) PAGEWIDTH (120) PAGELENGTH (65) CLASSES( ECODE(C:0x0 - C:0x3ffe), HCONST(C:0x0 - C:0x3ffe), XDATA(X:0x0 - X:0x7ff), HDATA(X:0x0 - X:0x7ff))
