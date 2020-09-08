@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project>
+  <fileVersion>2</fileVersion>
+  <fileChecksum>70473553</fileChecksum>
+  <configuration>
+    <name>Debug</name>
+    <outputs>
+      <file>$PROJ_DIR$\Debug\Obj\Command.pbi</file>
+      <file>$PROJ_DIR$\SRC\ADC.h</file>
+      <file>$PROJ_DIR$\SRC\Command.h</file>
+      <file>$PROJ_DIR$\Debug\Obj\Speaker.pbi</file>
+      <file>$PROJ_DIR$\SRC\Config.h</file>
+      <file>$PROJ_DIR$\SRC\Serial.c</file>
+      <file>$TOOLKIT_DIR$\lib\dbgstm8mmd.a</file>
+      <file>$PROJ_DIR$\Debug\Obj\Serial.pbi</file>
+      <file>$PROJ_DIR$\Debug\Obj\ReadID.pbi</file>
+      <file>$PROJ_DIR$\Debug\Obj\Speaker.o</file>
+      <file>$PROJ_DIR$\Debug\Obj\main.o</file>
+      <file>$PROJ_DIR$\SRC\speaker.h</file>
+      <file>$PROJ_DIR$\Debug\Obj\main.pbi</file>
+      <file>$PROJ_DIR$\Debug\Obj\DetectObj.pbi</file>
+      <file>$PROJ_DIR$\SRC\Timer.c</file>
+      <file>$PROJ_DIR$\Debug\Obj\Adc.o</file>
+      <file>$PROJ_DIR$\SRC\Speaker.c</file>
+      <file>$PROJ_DIR$\SRC\ReadID.c</file>
+      <file>$PROJ_DIR$\Debug\Obj\Cpu.o</file>
+      <file>$PROJ_DIR$\Debug\Obj\DetectObj.o</file>
+      <file>$PROJ_DIR$\SRC\ReadID.h</file>
+      <file>$PROJ_DIR$\SRC\Serial.h</file>
+      <file>$PROJ_DIR$\SRC\Command.c</file>
+      <file>$PROJ_DIR$\SRC\Timer.h</file>
+      <file>$PROJ_DIR$\SRC\DetectObj.c</file>
+      <file>$PROJ_DIR$\SGMW_E300_8S003_V0_2.txt</file>
+      <file>$PROJ_DIR$\SRC\main.c</file>
+      <file>$PROJ_DIR$\SRC\Cpu.h</file>
+      <file>$PROJ_DIR$\SRC\DetectObj.h</file>
+      <file>$PROJ_DIR$\SRC\Cpu.c</file>
+      <file>$PROJ_DIR$\SRC\Adc.c</file>
+      <file>$PROJ_DIR$\Debug\Exe\templproj.out</file>
+      <file>$TOOLKIT_DIR$\config\lnkstm8s003f3.icf</file>
+      <file>$PROJ_DIR$\Debug\Obj\Cpu.pbi</file>
+      <file>$TOOLKIT_DIR$\inc\iostm8s003f3.h</file>
+      <file>$PROJ_DIR$\Debug\Obj\SGMW_E200P_8S003AD.pbd</file>
+      <file>$PROJ_DIR$\Debug\Obj\Timer.pbi</file>
+      <file>$TOOLKIT_DIR$\inc\io_macros.h</file>
+      <file>$PROJ_DIR$\Debug\Obj\Command.o</file>
+      <file>$PROJ_DIR$\Debug\Exe\SGMW_E100_PAS_ALL_V0_0_2_200824.hex</file>
+      <file>$PROJ_DIR$\Debug\Obj\Timer.o</file>
+      <file>$PROJ_DIR$\Debug\Obj\Adc.pbi</file>
+      <file>$PROJ_DIR$\Debug\List\templproj.map</file>
+      <file>$PROJ_DIR$\Debug\Obj\Serial.o</file>
+      <file>$PROJ_DIR$\Debug\Obj\ReadID.o</file>
+      <file>$TOOLKIT_DIR$\lib\dlstm8mmn.a</file>
+    </outputs>
+    <file>
+      <name>[ROOT_NODE]</name>
+      <outputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 31 42</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\Serial.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 7</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 43</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 21 27 34 37 4 2 20 28 1 23</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 21 27 34 37 4 2 20 28 1 23</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\Timer.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 36</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 40</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 27 34 37 4 23 28 1 20</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 27 34 37 4 23 28 1 20</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\Speaker.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 3</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 9</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 28 27 34 37 4 1 20 11 21 2</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 28 27 34 37 4 1 20 11 21 2</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\ReadID.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 8</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 44</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 27 34 37 4 1 23 21 20 28</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 27 34 37 4 1 23 21 20 28</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\Command.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 0</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 38</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 21 27 34 37 4 2 20 23 28 1 11</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 21 27 34 37 4 2 20 23 28 1 11</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\DetectObj.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 13</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 19</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 27 34 37 4 28 1 20 23 2 21 11</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 27 34 37 4 28 1 20 23 2 21 11</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\main.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 12</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 10</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 27 34 37 4 23 28 1 20 21 2 11</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 27 34 37 4 23 28 1 20 21 2 11</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\Cpu.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 33</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 18</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 27 34 37 4 1 23</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 27 34 37 4 1 23</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\Adc.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 41</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 15</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 1 27 34 37 4 23 28 20</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 1 27 34 37 4 23 28 20</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\Debug\Exe\templproj.out</name>
+      <outputs>
+        <tool>
+          <name>OBJCOPY</name>
+          <file> 39</file>
+        </tool>
+        <tool>
+          <name>ILINK</name>
+          <file> 42</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 32 15 38 18 19 44 43 9 40 10 45 6</file>
+        </tool>
+      </inputs>
+    </file>
+  </configuration>
+  <configuration>
+    <name>Release</name>
+    <outputs/>
+    <forcedrebuild>
+      <name>[MULTI_TOOL]</name>
+      <tool>ILINK</tool>
+    </forcedrebuild>
+  </configuration>
+</project>
+
+

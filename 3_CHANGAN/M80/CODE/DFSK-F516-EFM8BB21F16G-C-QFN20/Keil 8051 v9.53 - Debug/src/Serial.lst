@@ -1,0 +1,499 @@
+C51 COMPILER V9.53.0.0   SERIAL                                                            08/13/2020 11:08:45 PAGE 1   
+
+
+C51 COMPILER V9.53.0.0, COMPILATION OF MODULE SERIAL
+OBJECT MODULE PLACED IN .\src\Serial.OBJ
+COMPILER INVOKED BY: c:\SiliconLabs\SimplicityStudio\v4\developer\toolchains\keil_8051\9.53\BIN\C51.exe C:\Users\lzdd\De
+                    -sktop\m80\DFSK-F516-EFM8BB21F16G-C-QFN20\src\Serial.c OMF2 LARGE DEBUG OBJECTEXTEND ROM(LARGE) WARNINGLEVEL(2) FLOATFUZZ
+                    -Y(3) OPTIMIZE(8,SPEED) DEFINE(DEBUG=1) INTVECTOR(0X0000) INTPROMOTE INCDIR(C:\Users\lzdd\Desktop\m80\DFSK-F516-EFM8BB21F
+                    -16G-C-QFN20\inc;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.6//Device/shared/si8051base;C:/SiliconLabs/S
+                    -implicityStudio/v4/developer/sdks/8051/v4.1.6//Device/EFM8BB2/inc) PRINT(.\src\Serial.lst) COND PAGEWIDTH(120) PAGELENGT
+                    -H(65) OBJECT(.\src\Serial.OBJ)
+
+line level    source
+
+   1          /*********************************************************************************************************
+             -************
+   2          ** FILE NAME: Serial.c
+   3          **
+   4          ** PROJECT:  长城H2倒车雷达
+   5          ** CPU:      EFM8BB21F16G
+   6          ** COMPILER: 芯科
+   7          ** -------------------------------------------------------------------------------------------------------
+             -------------
+   8          ** VERSION:  V1.0
+   9          ** DATE:     2018.12.24
+  10          **********************************************************************************************************
+             -***********/
+  11          
+  12          #include "cpu.h"
+  13          #include "DetectObj.h"
+  14          #include "Timer.h"
+  15          #include "Serial.h"
+  16          #include "command.h"
+  17          #include "Uart.h"
+  18          
+  19          SERIAL_ISP  xdata Serial_ISP = Srl_GetHeader;
+  20          StSerial    xdata Serial;
+  21          
+  22          
+  23          void CommunicaitonMode(ECOM_MODE commode)
+  24          {
+  25   1              if(COM_Internal == commode)
+  26   1              {
+  27   2                      UART0_Moudle_Dis();
+  28   2                      EnableInternalCommunicaiton();
+  29   2              }
+  30   1              else if (COM_Uart == commode)
+  31   1              {
+  32   2                      Stop_PCA0_Capture(0);           //DATA
+  33   2                      Uart0_Init();
+  34   2                      Uart0TX_NOTOK_Flag = FALSE;
+  35   2              }
+  36   1              else
+  37   1              {
+  38   2                      UART0_Moudle_Dis();
+  39   2                      EnableInternalCommunicaiton();
+  40   2                      DisableInternalCommunicaiton();
+  41   2              }
+  42   1      }
+  43          
+  44          
+  45          
+  46          
+  47          void EnableInternalCommunicaiton (void)
+  48          {
+C51 COMPILER V9.53.0.0   SERIAL                                                            08/13/2020 11:08:45 PAGE 2   
+
+  49   1              SFRPAGE_TEMP = SFRPAGE;
+  50   1              SFRPAGE = 0x20;
+  51   1              P0SKIP |= (P0SKIP_B7__SKIPPED);
+  52   1              P1SKIP &= (~P1SKIP_B0__SKIPPED);
+  53   1              XBR1   |=  XBR1_PCA0ME__CEX0;   //PCA Module I/O Enable.
+  54   1                                                                          //0x0 DISABLED All PCA I/O unavailable at Port pins.
+  55   1                                                                              //0x1 CEX0 CEX0 routed to Port pin.
+  56   1                                                                              //0x2 CEX0_CEX1 CEX0, CEX1 routed to Port pins.
+  57   1                                                                          //0x3 CEX0_CEX1_CEX2 CEX0, CEX1, CEX2 routed to Port pins.
+  58   1      
+  59   1              SFRPAGE = 0x10;
+  60   1              IE  |= IE_ES0__ENABLED;         //00; Set Interrupt Priority; 11 is highest; 00 is lowest;
+  61   1              IP  &= (~0x10);
+  62   1              IPH &= (~0x10);
+  63   1              SFRPAGE = SFRPAGE_TEMP;
+  64   1      
+  65   1              Start_PCA0_Capture(0);          //DATA
+  66   1      }
+  67          void DisableInternalCommunicaiton (void)
+  68          {
+  69   1              Stop_PCA0_Capture(0);                   //DATA
+  70   1              Stop_PCA0_Capture(1);                   //LIN
+  71   1      }
+  72          
+  73          void Srl_InitVariable(void)
+  74          {
+  75   1              BYTE xdata i;
+  76   1              Serial.byCnt = 0;
+  77   1              Serial.byData = 0;
+  78   1              Serial.bDataHeader = 0;
+  79   1      
+  80   1              Serial.bValid = 0;
+  81   1              Serial.CmdHead_Rx = 0;
+  82   1              for(i=0;i<16;i++)
+  83   1              {
+  84   2                      Serial.Time[i] = 0;
+  85   2              }
+  86   1              Serial.Index = 0;
+  87   1              Serial_ISP = &Srl_GetHeader;
+  88   1      }
+  89          
+  90          void SendData_SelfCheck (void)
+  91          {
+  92   1          BYTE i;
+  93   1          BYTE CheckSum = 0;
+  94   1              BYTE byData = 0;
+  95   1              BOOL  temp = FALSE;
+  96   1              
+  97   1              if ( DiagInfo.bSelfCheckResult[1] == 0
+  98   1                      && DiagInfo.bSelfCheckResult[0] == 0)
+  99   1                      {
+ 100   2                      temp = TRUE;
+ 101   2                      }
+ 102   1              
+ 103   1              if (temp)
+ 104   1                      {
+ 105   2                      byData = 0x1F;
+ 106   2                      }
+ 107   1              else
+ 108   1                      {
+ 109   2                      byData = 0x0F;
+ 110   2                      }
+ 111   1      
+C51 COMPILER V9.53.0.0   SERIAL                                                            08/13/2020 11:08:45 PAGE 3   
+
+ 112   1      
+ 113   1              //HEAD
+ 114   1          Serial.wSendBuffer[0] = 0xFFFF - HEAD_2000 + 13;
+ 115   1              //DATA
+ 116   1          for(i=0; i<5; i++)
+ 117   1          {
+ 118   2              if(byData & (0x01<<i))
+ 119   2              {
+ 120   3                      Serial.wSendBuffer[2*i+1] = 0xFFFF - DATA_WIDTH_2 - 13;
+ 121   3                      Serial.wSendBuffer[2*i+2] = 0xFFFF - DATA_WIDTH_1 + 13;
+ 122   3                      CheckSum++;
+ 123   3              }
+ 124   2              else
+ 125   2              {
+ 126   3                      Serial.wSendBuffer[2*i+1] = 0xFFFF - DATA_WIDTH_1 - 13;
+ 127   3                      Serial.wSendBuffer[2*i+2] = 0xFFFF - DATA_WIDTH_2 + 13;
+ 128   3              }
+ 129   2          }
+ 130   1          CheckSum = CheckSum%2;
+ 131   1              //CheckSum
+ 132   1          if(CheckSum)
+ 133   1          {
+ 134   2              Serial.wSendBuffer[5*2+1] = 0xFFFF - DATA_WIDTH_2 - 13;
+ 135   2              Serial.wSendBuffer[5*2+2] = 0xFFFF - DATA_WIDTH_1 + 13;
+ 136   2          }
+ 137   1          else
+ 138   1          {
+ 139   2              Serial.wSendBuffer[5*2+1] = 0xFFFF - DATA_WIDTH_1 - 13;
+ 140   2              Serial.wSendBuffer[5*2+2] = 0xFFFF - DATA_WIDTH_2 + 13;
+ 141   2          }
+ 142   1              //end
+ 143   1          //Serial.wSendBuffer[5*2+3] = 0xFFFF - DATA_WIDTH_1 - 13;
+ 144   1          //Serial.wSendBuffer[5*2+4] = 0xFFFF - DATA_WIDTH_1 + 13;
+ 145   1      
+ 146   1              Serial.bSendIndex = 0;
+ 147   1              Serial.bSendMaxIndex = 5*2+4;
+ 148   1              Start_PCA0_Comparator();
+ 149   1      
+ 150   1      }
+ 151          
+ 152          void SendData_Work (void)
+ 153          {
+ 154   1          BYTE i;
+ 155   1          BYTE CheckSum = 0;
+ 156   1              DWORD byData = 0;
+ 157   1              BYTE  eve_temp;
+ 158   1      
+ 159   1              eve_temp = MsgRadar_Distance._bit.RPASpeakerInfo;
+ 160   1              
+ 161   1              if(eve_temp == 0x0000)
+ 162   1              {
+ 163   2              byData = 0xFFFF;
+ 164   2              }else if (eve_temp == 0x0001)
+ 165   1              {       
+ 166   2              byData = 0x1FFFF;
+ 167   2              }else if (eve_temp == 0x0002)
+ 168   1              {
+ 169   2              byData = 0x2FFFF;
+ 170   2              }else
+ 171   1              {
+ 172   2              byData = 0x3FFFF;
+ 173   2              }
+ 174   1      
+C51 COMPILER V9.53.0.0   SERIAL                                                            08/13/2020 11:08:45 PAGE 4   
+
+ 175   1              //HEAD
+ 176   1          Serial.wSendBuffer[0] = 0xFFFF - HEAD_1500 + 13;
+ 177   1              //DATA
+ 178   1          for(i=0; i<18; i++)
+ 179   1          {
+ 180   2              if(byData & ((DWORD)0x00001<<i))
+ 181   2              {
+ 182   3                      Serial.wSendBuffer[2*i+1] = 0xFFFF - DATA_WIDTH_2 - 13;
+ 183   3                      Serial.wSendBuffer[2*i+2] = 0xFFFF - DATA_WIDTH_1 + 13;
+ 184   3                      CheckSum++;
+ 185   3              }
+ 186   2              else
+ 187   2              {
+ 188   3                      Serial.wSendBuffer[2*i+1] = 0xFFFF - DATA_WIDTH_1 - 13;
+ 189   3                      Serial.wSendBuffer[2*i+2] = 0xFFFF - DATA_WIDTH_2 + 13;
+ 190   3              }
+ 191   2          }
+ 192   1          CheckSum = CheckSum%2;
+ 193   1              //CheckSum
+ 194   1          if(CheckSum)
+ 195   1          {
+ 196   2              Serial.wSendBuffer[18*2+1] = 0xFFFF - DATA_WIDTH_2 - 13;
+ 197   2              Serial.wSendBuffer[18*2+2] = 0xFFFF - DATA_WIDTH_1 + 13;
+ 198   2          }
+ 199   1          else
+ 200   1          {
+ 201   2              Serial.wSendBuffer[18*2+1] = 0xFFFF - DATA_WIDTH_1 - 13;
+ 202   2              Serial.wSendBuffer[18*2+2] = 0xFFFF - DATA_WIDTH_2 + 13;
+ 203   2          }
+ 204   1              //end
+ 205   1          //Serial.wSendBuffer[18*2+3] = 0xFFFF - DATA_WIDTH_1 - 13;
+ 206   1          //Serial.wSendBuffer[18*2+4] = 0xFFFF - DATA_WIDTH_1 + 13;
+ 207   1          
+ 208   1              Serial.bSendIndex = 0;
+ 209   1              Serial.bSendMaxIndex = 18*2+4;
+ 210   1              Start_PCA0_Comparator();
+ 211   1      
+ 212   1      }
+ 213          
+ 214          
+ 215          /***********************************************************************
+ 216          ** Send data in word size,parity bit is auto added.
+ 217          ***********************************************************************/
+ 218          void Srl_SendData(WORD Head, BYTE byId, BYTE byIdLen, WORD byData, BYTE byDataLen)
+ 219          {
+ 220   1          BYTE i;
+ 221   1          WORD Data;
+ 222   1          BYTE CheckSum = 0;
+ 223   1      
+ 224   1          Data = ((byData<<byIdLen)|byId); //DATA + ID
+ 225   1      
+ 226   1          if(Head == HEAD_800)
+ 227   1          {
+ 228   2              Serial.bIO_800usFlag = TRUE;
+ 229   2          }
+ 230   1          else
+ 231   1          {
+ 232   2              Serial.bIO_800usFlag = FALSE;
+ 233   2          }
+ 234   1          Serial.wSendBuffer[0] = 0xFFFF - Head + 13;
+ 235   1          for(i=0; i<(byIdLen+byDataLen); i++)
+ 236   1          {
+ 237   2              if(Data & (0x01<<i))
+C51 COMPILER V9.53.0.0   SERIAL                                                            08/13/2020 11:08:45 PAGE 5   
+
+ 238   2              {
+ 239   3                      Serial.wSendBuffer[2*i+1] = 0xFFFF - DATA_WIDTH_2 - 13;
+ 240   3                      Serial.wSendBuffer[2*i+2] = 0xFFFF - DATA_WIDTH_1 + 13;
+ 241   3                      CheckSum++;
+ 242   3              }
+ 243   2              else
+ 244   2              {
+ 245   3                      Serial.wSendBuffer[2*i+1] = 0xFFFF - DATA_WIDTH_1 - 13;
+ 246   3                      Serial.wSendBuffer[2*i+2] = 0xFFFF - DATA_WIDTH_2 + 13;
+ 247   3              }
+ 248   2          }
+ 249   1          CheckSum = CheckSum%2;
+ 250   1          if(CheckSum)
+ 251   1          {
+ 252   2              Serial.wSendBuffer[(byIdLen+byDataLen)*2+1] = 0xFFFF - DATA_WIDTH_2 - 13;
+ 253   2              Serial.wSendBuffer[(byIdLen+byDataLen)*2+2] = 0xFFFF - DATA_WIDTH_1 + 13;
+ 254   2          }
+ 255   1          else
+ 256   1          {
+ 257   2              Serial.wSendBuffer[(byIdLen+byDataLen)*2+1] = 0xFFFF - DATA_WIDTH_1 - 13;
+ 258   2              Serial.wSendBuffer[(byIdLen+byDataLen)*2+2] = 0xFFFF - DATA_WIDTH_2 + 13;
+ 259   2          }
+ 260   1          Serial.wSendBuffer[(byIdLen+byDataLen)*2+3] = 0xFFFF - DATA_WIDTH_1 - 13;
+ 261   1          Serial.wSendBuffer[(byIdLen+byDataLen)*2+4] = 0xFFFF - DATA_WIDTH_1 + 13;
+ 262   1      
+ 263   1              Serial.bSendIndex = 0;
+ 264   1              Serial.bSendMaxIndex = (byIdLen+byDataLen)*2+6;
+ 265   1              Start_PCA0_Comparator();
+ 266   1      
+ 267   1      }
+ 268          
+ 269          /***********************************************************************
+ 270          ** PCA0 interrupt serve function.
+ 271          ************************************************************************/
+ 272          static xdata WORD CapTime0,CapTime1;
+ 273          SI_INTERRUPT (PCA0_ISR, PCA0_IRQn)//PCA0 interrupt
+ 274          {
+ 275   1              if(PCA0CN0_CCF0)//CCF0 is capture  DATA RX
+ 276   1              {
+ 277   2                      bLevel = (BOOL)DATA_RX;
+ 278   2                      CapTime0 = CapTime1;
+ 279   2                      CapTime1 = PCA0CP0;
+ 280   2                      if(CapTime1 > CapTime0)
+ 281   2                      {
+ 282   3                              wTime = CapTime1 - CapTime0;
+ 283   3                      }
+ 284   2                      else
+ 285   2                      {
+ 286   3                              wTime = 0xFFFF - CapTime0 + CapTime1;
+ 287   3                      }
+ 288   2                      Serial.Time[Serial.Index++] = wTime;
+ 289   2                      if(Serial.Index == 16)Serial.Index = 0;
+ 290   2                      (*Serial_ISP)(bLevel,wTime);
+ 291   2                      PCA0CN0_CCF0 = 0;
+ 292   2              }
+ 293   1              if(PCA0CN0_CCF1)//CCF1 is capture  LIN RX
+ 294   1              {
+ 295   2      //              bLevel = (BOOL)LIN_RX;
+ 296   2                      CapTime0 = CapTime1;
+ 297   2                      CapTime1 = PCA0CP1;
+ 298   2                      if(CapTime1 > CapTime0)
+ 299   2                      {
+ 300   3                              wTime = CapTime1 - CapTime0;
+C51 COMPILER V9.53.0.0   SERIAL                                                            08/13/2020 11:08:45 PAGE 6   
+
+ 301   3                      }
+ 302   2                      else
+ 303   2                      {
+ 304   3                              wTime = 0xFFFF - CapTime0 + CapTime1;
+ 305   3                      }
+ 306   2                      //Serial.Time[Serial.Index++] = wTime;
+ 307   2                      //if(Serial.Index == 16)Serial.Index = 0;
+ 308   2                      (*Serial_ISP)(bLevel,wTime);
+ 309   2                      PCA0CN0_CCF1 = 0;
+ 310   2              }
+ 311   1              if(PCA0CN0_CCF2)//CCF2 is capture
+ 312   1              {
+ 313   2      
+ 314   2                      PCA0CN0_CCF2 = 0;
+ 315   2              }
+ 316   1              if(PCA0CN0_CF == 1) //Dont is PCA0 is overflow
+ 317   1              {
+ 318   2                      if(Serial.bComparatorFlag == TRUE)
+ 319   2                      {
+ 320   3      //                      if(Serial.bIO_800usFlag == TRUE)
+ 321   3      //                      {
+ 322   3      //                              DATA_TX = ~DATA_TX;
+ 323   3      //                      }
+ 324   3      //                      else
+ 325   3      //                      {
+ 326   3      //                              DATA_TX = ~DATA_TX;
+ 327   3      //                      }
+ 328   3                              DATA_TX = ~DATA_TX;
+ 329   3                              PCA0 = Serial.wSendBuffer[Serial.bSendIndex];
+ 330   3                              Serial.bSendIndex++;
+ 331   3                              if(Serial.bSendIndex == Serial.bSendMaxIndex)
+ 332   3                              {
+ 333   4                                      Stop_PCA0_Comparator();
+ 334   4                              }
+ 335   3                      }
+ 336   2                      PCA0CN0_CF = 0;
+ 337   2              }
+ 338   1      }
+ 339          
+ 340          void Srl_GetHeader(BOOL bLevel,WORD wTime)
+ 341          {
+ 342   1          if(bLevel)
+ 343   1          {
+ 344   2              INIT_RX_DATA;
+ 345   2              if(wTime>HEAD_800_MIN && wTime<HEAD_800_MAX)
+ 346   2              {
+ 347   3                      Serial.CmdHead_Rx = CMD_HEAD_800;
+ 348   3                      Serial_ISP = &Srl_GetData;
+ 349   3              }
+ 350   2              if(wTime>HEAD_1000_MIN && wTime<HEAD_1000_MAX)
+ 351   2              {
+ 352   3                      Serial.CmdHead_Rx = CMD_HEAD_1000;
+ 353   3                      Serial_ISP = &Srl_GetData;
+ 354   3              }
+ 355   2              if(wTime>HEAD_1500_MIN && wTime<HEAD_1500_MAX)
+ 356   2              {
+ 357   3                      Serial.CmdHead_Rx = CMD_HEAD_1500;
+ 358   3                      Serial_ISP = &Srl_GetData;
+ 359   3              }
+ 360   2              if(wTime>HEAD_2000_MIN && wTime<HEAD_2000_MAX)
+ 361   2              {
+ 362   3                      Serial.CmdHead_Rx = CMD_HEAD_2000;
+ 363   3                      Serial_ISP = &Srl_GetData;
+C51 COMPILER V9.53.0.0   SERIAL                                                            08/13/2020 11:08:45 PAGE 7   
+
+ 364   3              }
+ 365   2                      if(wTime>HEAD_2500_MIN && wTime<HEAD_2500_MAX)
+ 366   2              {
+ 367   3                      Serial.CmdHead_Rx = CMD_HEAD_2500;
+ 368   3                      Serial_ISP = &Srl_GetData;
+ 369   3              }
+ 370   2              if(wTime>HEAD_3000_MIN && wTime<HEAD_3000_MAX)
+ 371   2              {
+ 372   3                      Serial.CmdHead_Rx = CMD_HEAD_3000;
+ 373   3                      Serial_ISP = &Srl_GetData;
+ 374   3              }
+ 375   2              }
+ 376   1      }
+ 377          
+ 378          
+ 379          void Srl_GetData(BOOL bLevel,WORD wTime)
+ 380          {
+ 381   1          if(wTime<=DATA_WIDTH_1_MIN || wTime>=DATA_WIDTH_2_MAX)Serial_ISP = &Srl_GetHeader;
+ 382   1      
+ 383   1          if(bLevel)
+ 384   1          {
+ 385   2              if(wTime > DATA_WIDTH_1_MIN && wTime < DATA_WIDTH_1_MAX) // 100us
+ 386   2              {
+ 387   3                  if(Serial.bDataHeader)
+ 388   3                  {
+ 389   4                      Serial.byData = Serial.byData+(1<<Serial.byCnt);
+ 390   4                      Serial.byCnt++;
+ 391   4                      Serial.bDataHeader = FALSE;
+ 392   4                  }
+ 393   3                  else
+ 394   3                  {
+ 395   4                      //  By Sean
+ 396   4                      if(Serial.byCnt>0)
+ 397   4                      {
+ 398   5                                              if(RxDataParity() == TRUE)
+ 399   5                                                      Serial.bValid = TRUE;
+ 400   5                                              Serial_ISP = &Srl_GetHeader;
+ 401   5                      }
+ 402   4      
+ 403   4                      return;
+ 404   4                  }
+ 405   3              }
+ 406   2              if(wTime > DATA_WIDTH_2_MIN && wTime < DATA_WIDTH_2_MAX) // 200us
+ 407   2              {
+ 408   3                  if(Serial.bDataHeader)//err
+ 409   3                  {
+ 410   4                      Serial_ISP = &Srl_GetHeader;
+ 411   4                  }
+ 412   3                  else
+ 413   3                  {
+ 414   4                      Serial.byCnt++;
+ 415   4                      Serial.bDataHeader = FALSE;
+ 416   4                  }
+ 417   3              }
+ 418   2          }
+ 419   1          else
+ 420   1          {
+ 421   2              if(wTime > DATA_WIDTH_1_MIN && wTime < DATA_WIDTH_1_MAX) // 100us
+ 422   2              {
+ 423   3                    Serial.bDataHeader = FALSE;
+ 424   3              }
+ 425   2              if(wTime > DATA_WIDTH_2_MIN && wTime < DATA_WIDTH_2_MAX) // 200us
+ 426   2              {
+C51 COMPILER V9.53.0.0   SERIAL                                                            08/13/2020 11:08:45 PAGE 8   
+
+ 427   3                    Serial.bDataHeader = TRUE;
+ 428   3              }
+ 429   2          }
+ 430   1      }
+ 431          
+ 432          BYTE RxDataParity(void)
+ 433          {
+ 434   1              BYTE i,RET = FALSE;
+ 435   1              BYTE CheckSum = 0;
+ 436   1      
+ 437   1              for(i=0 ;i<(Serial.byCnt-1);i++)
+ 438   1              {
+ 439   2                      if(Serial.byData & (0x01<<i))
+ 440   2                      {
+ 441   3                              CheckSum ++;
+ 442   3                      }
+ 443   2              }
+ 444   1              CheckSum = CheckSum%2;
+ 445   1              if(CheckSum == (Serial.byData>>(Serial.byCnt-1)))
+ 446   1              {
+ 447   2                      RET = TRUE;
+ 448   2              }
+ 449   1              return RET;
+ 450   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2026    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =    150      19
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

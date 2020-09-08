@@ -1,0 +1,273 @@
+C51 COMPILER V9.60.0.0   UART                                                              08/04/2020 09:18:57 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN .\src\Uart.OBJ
+COMPILER INVOKED BY: c:\SiliconLabs\SimplicityStudio\v4\developer\toolchains\keil_8051\9.60\BIN\C51.exe C:\WorkSpace\7_S
+                    -WM\T50\T50¸ü¸Ä³¤Ãù±¨¾¯³ÌÐò\HCXY_T50_EFM8BB21F16G-C-QFN20\src\Uart.c OMF2 LARGE DEBUG OBJECTEXTEND ROM(LARGE) WARNINGLEVE
+                    -L(2) FLOATFUZZY(3) OPTIMIZE(8,SPEED) DEFINE(DEBUG=1) INTVECTOR(0X0000) INTPROMOTE INCDIR(C:\WorkSpace\7_SWM\T50\T50¸ü¸Ä³
+                    -¤Ãù±¨¾¯³ÌÐò\HCXY_T50_EFM8BB21F16G-C-QFN20\inc;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/shar
+                    -ed/si8051base;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/EFM8BB2/inc) PRINT(.\src\Uart.lst) C
+                    -OND PAGEWIDTH(120) PAGELENGTH(65) OBJECT(.\src\Uart.OBJ)
+
+line level    source
+
+   1          #include "SI_EFM8BB2_DEFS.h"
+   2          #include "Uart.h"
+   3          #include "UartCfg.h"
+   4          #include "Command.h"
+   5          #include "Cpu.h"
+   6          
+   7          #define UART_INT_NEST_COUNT    253
+   8          static uint8 UartInterruptCount = 0;
+   9          
+  10          /* Clock prescaler values for baud rate initialization */
+  11          #define NUM_PRESC              8
+  12          
+  13          void UART1_Init(void)
+  14          {
+  15   1              SFRPAGE_TEMP = SFRPAGE;
+  16   1              P0SKIP &= (~P0SKIP_B4__SKIPPED);
+  17   1              P0SKIP &= (~P0SKIP_B5__SKIPPED);
+  18   1              XBR2   |=  XBR2_URT1E__ENABLED;
+  19   1      
+  20   1              SFRPAGE = 0x20;
+  21   1              SBCON1 = SBCON1_BREN__ENABLED | SBCON1_BPS__DIV_BY_48;
+  22   1              UART1FCN0 = UART1FCN0_RXTH__ZERO | UART1FCN0_TXTH__ZERO
+  23   1                              | UART1FCN0_RFRQE__ENABLED | UART1FCN0_TFRQE__DISABLED;
+  24   1              SBRLH1 = (0xFE << SBRLH1_BRH__SHIFT);
+  25   1              SBRLL1 = (0x56 << SBRLL1_BRL__SHIFT);
+  26   1              UART1LIN |= UART1LIN_AUTOBDE__DISABLED | UART1LIN_LINMDE__DISABLED;
+  27   1              SCON1 |= SCON1_REN__RECEIVE_ENABLED;
+  28   1              UART1FCN1 &= ~(UART1FCN1_RIE__BMASK | UART1FCN1_TIE__BMASK);
+  29   1              UART1FCN1 |= UART1FCN1_RXTO__TIMEOUT_16;
+  30   1              SFRPAGE = 0x10;
+  31   1          EIE2  |= EIE2_ES1__ENABLED;
+  32   1          EIP2  &= (~0x04);  //00; Set Interrupt Priority; 11 is highest; 00 is lowest;
+  33   1          EIP2H &= (~0x04);
+  34   1      
+  35   1          SFRPAGE = 0x20;
+  36   1          SCON1 = UART_RX_EN;
+  37   1      
+  38   1              /*Set data bit and stop bit length */
+  39   1              SMOD1 = UART_DL_8_BITS | UART_SBL_SHORT;
+  40   1      
+  41   1              /* Init TX FIFO */
+  42   1              UART1FCN0 &= ~(UART_TFRQE | UART_TFLSH | UART_TXTH);
+  43   1              UART1FCN0 |= (UART_TXTH_ZERO | UART_TFRQE_DISABLED);
+  44   1      
+  45   1              UART1FCN1 &= ~(UART_TFRQ | UART_TXHOLD | UART_TXNF | UART_TIE);
+  46   1              UART1FCN1 |= (UART_TFRQ_SET | UART_TXHOLD_CONTINUE | UART_TIE_DISABLED);
+  47   1      
+  48   1              /* Init RX FIFO */
+  49   1              UART1FCN0 &= ~(UART_RFRQE | UART_RFLSH | UART_RXTH | UART_RFRQE);
+  50   1              UART1FCN0 |= (UART_RXTH_ZERO | UART_RFRQE_ENABLED);
+  51   1      
+C51 COMPILER V9.60.0.0   UART                                                              08/04/2020 09:18:57 PAGE 2   
+
+  52   1              UART1FCN1 &= ~(UART_RFRQ_IF | UART_RXTO | UART_RIE);
+  53   1              UART1FCN1 |= (UART_RFRQ_SET     | UART_RXTO_TIMEOUT_16 | UART_RIE_DISABLED);
+  54   1      
+  55   1              SFRPAGE = SFRPAGE_TEMP;
+  56   1      
+  57   1      }
+  58          
+  59          
+  60          void UART1_Moudle_Dis(void)
+  61          {   
+  62   1              DECL_PAGE;
+  63   1              SET_PAGE(UART1_SFR_PAGE);
+  64   1              SCON1 = (UART_OVR_NOT_SET
+  65   1                              | UART_PERR_NOT_SET
+  66   1                              | UART_REN_RECEIVE_DISABLED
+  67   1                              | UART_TBX_LOW
+  68   1                              | UART_RBX_LOW
+  69   1                              | UART_TI_NOT_SET
+  70   1                              | UART_RI_NOT_SET);
+  71   1              SMOD1 = (UART_MCE_MULTI_DISABLED
+  72   1                              | UART_SPT_ODD_PARITY
+  73   1                              | UART_PE_PARIY_DISABLED
+  74   1                              | UART_DL_8_BITS
+  75   1                              | UART_XBE_DISABLED
+  76   1                              | UART_SBL_SHORT);
+  77   1              SBCON1 = (SBCON1_BREN__DISABLED | SBCON1_BPS__DIV_BY_48);
+  78   1              UART1LIN = (UART_AUTOBDE_DISABLED | UART_SYNCDIE_DISABLED);
+  79   1              RESTORE_PAGE;
+  80   1      }
+  81          
+  82          void UART_INTRX_Dis(void) 
+  83          {
+  84   1              DECL_PAGE;
+  85   1      
+  86   1          if(0 == UartInterruptCount)
+  87   1          {
+  88   2                      SET_PAGE(UART1_SFR_PAGE);
+  89   2                      UART1FCN1_RIE = 0;
+  90   2                      RESTORE_PAGE;
+  91   2          }
+  92   1      
+  93   1          UartInterruptCount++;
+  94   1          if(UartInterruptCount > UART_INT_NEST_COUNT)
+  95   1          {
+  96   2              UartInterruptCount = UART_INT_NEST_COUNT;
+  97   2          }
+  98   1      
+  99   1      }
+ 100          
+ 101          void UART_INTRX_En(void) 
+ 102          {
+ 103   1              DECL_PAGE;
+ 104   1      
+ 105   1          if(UartInterruptCount > 0)
+ 106   1          {
+ 107   2              UartInterruptCount--;
+ 108   2          }
+ 109   1      
+ 110   1          if(0 == UartInterruptCount)
+ 111   1          {
+ 112   2                      SET_PAGE(UART1_SFR_PAGE);
+ 113   2                      UART1FCN1_RIE = 1;
+ 114   2                      RESTORE_PAGE;
+C51 COMPILER V9.60.0.0   UART                                                              08/04/2020 09:18:57 PAGE 3   
+
+ 115   2          }
+ 116   1      }
+ 117          
+ 118          BOOL UART1_TXOK_Flag = FALSE;
+ 119          void UART1_WriteByte(uint8 dataTx)
+ 120          { 
+ 121   1              DECL_PAGE;
+ 122   1              SET_PAGE(UART1_SFR_PAGE);
+ 123   1              SBUF1 = dataTx;
+ 124   1      
+ 125   1              UART1_TXOK_Flag = FALSE;
+ 126   1              while(!UART1_TXOK_Flag)
+ 127   1              {
+ 128   2                      if(((SCON1&SCON1_TI__BMASK) >> SCON1_TI__SHIFT) > 0)
+ 129   2                      {
+ 130   3                              SCON1_TI = 0;
+ 131   3                              UART1_TXOK_Flag = TRUE;
+ 132   3                      }
+ 133   2                      CLR_WDT;
+ 134   2              }
+ 135   1              RESTORE_PAGE;
+ 136   1      }
+ 137          
+ 138          void UART_BreakIntEn(void)
+ 139          {
+ 140   1              DECL_PAGE;
+ 141   1              SET_PAGE(UART1_SFR_PAGE);
+ 142   1              UART1LIN |= UART_BREAKDNIE_ENABLED;
+ 143   1              RESTORE_PAGE;
+ 144   1      }
+ 145          
+ 146          
+ 147          void UART_BreakIntDis(void)                       
+ 148          {      
+ 149   1              DECL_PAGE;
+ 150   1              SET_PAGE(UART1_SFR_PAGE);
+ 151   1              UART1LIN &= ~UART_BREAKDNIE_ENABLED;
+ 152   1              RESTORE_PAGE;
+ 153   1      }
+ 154          
+ 155          void UART_RxDataIntEn(void)
+ 156          {
+ 157   1      
+ 158   1      }
+ 159          
+ 160          
+ 161          void UART_RxDataIntDis(void)                       
+ 162          {      
+ 163   1      
+ 164   1      }
+ 165          
+ 166          void UART_BreakDetectEn(void)
+ 167          { 
+ 168   1      
+ 169   1      }
+ 170          
+ 171          void UART_BreakTrigger(void)
+ 172          { 
+ 173   1      
+ 174   1      }
+ 175          
+ 176          void UART_BreakDetectDis(void)
+ 177          {
+C51 COMPILER V9.60.0.0   UART                                                              08/04/2020 09:18:57 PAGE 4   
+
+ 178   1       
+ 179   1      } 
+ 180          
+ 181          void            UART1_RxErrorHook(void)
+ 182          {
+ 183   1      
+ 184   1      
+ 185   1      }
+ 186          
+ 187          void            UART1_RxDataHook(uint8 databyte)
+ 188          {
+ 189   1              if(databyte == 0xF0)
+ 190   1              {
+ 191   2      
+ 192   2              }
+ 193   1      
+ 194   1      }
+ 195          
+ 196          
+ 197          
+ 198          //static uint8 rxRemaining = 0;
+ 199          //static uint8 *rxBuffer;
+ 200          
+ 201          SI_INTERRUPT(UART1_ISR, UART1_IRQn)
+ 202          {
+ 203   1      #if 1
+ 204   1              uint8 discard;
+ 205   1              uint8 errors;
+ 206   1      
+ 207   1              /* If auto-baud sync word detected to set baudrate, clear flag and disable auto-baud detection */
+ 208   1              if(0 !=  (UART1LIN & UART_AUTOBAUD_IF))
+ 209   1              {
+ 210   2                      UART1LIN &= ~(UART_AUTOBAUD_IF | UART_AUTOBDE_ENABLED /*| UART_SYNCDIE_ENABLED*/);
+ 211   2              }
+ 212   1      
+ 213   1                      /* If parity or overrun error, clear flags, and call user */
+ 214   1                      errors = SCON1 & (UART_RXOVR_EF | UART_PARITY_EF);
+ 215   1                      if(errors)
+ 216   1                      {
+ 217   2                              SCON1 &= ~errors;
+ 218   2                              UART1_RxErrorHook();
+ 219   2                      }
+ 220   1      
+ 221   1                      /* Store byte if there is no parity error */
+ 222   1                      if (errors & UART_PARITY_EF)
+ 223   1                      {
+ 224   2                              discard = SBUF1;
+ 225   2                      }
+ 226   1                      else
+ 227   1                      {
+ 228   2                              discard = SBUF1;
+ 229   2                              UART1_RxDataHook(discard);
+ 230   2                      }
+ 231   1      #endif
+ 232   1      }
+ 233          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    321    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      2       1
+   PDATA SIZE       =   ----    ----
+C51 COMPILER V9.60.0.0   UART                                                              08/04/2020 09:18:57 PAGE 5   
+
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

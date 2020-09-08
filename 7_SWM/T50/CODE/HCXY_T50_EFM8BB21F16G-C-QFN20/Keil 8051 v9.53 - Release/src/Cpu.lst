@@ -1,0 +1,139 @@
+C51 COMPILER V9.60.0.0   CPU                                                               08/04/2020 09:19:06 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE CPU
+OBJECT MODULE PLACED IN .\src\Cpu.OBJ
+COMPILER INVOKED BY: c:\SiliconLabs\SimplicityStudio\v4\developer\toolchains\keil_8051\9.60\BIN\C51.exe C:\WorkSpace\7_S
+                    -WM\T50\T50¸ü¸Ä³¤Ãù±¨¾¯³ÌÐò\HCXY_T50_EFM8BB21F16G-C-QFN20\src\Cpu.c OMF2 SMALL DEBUG OBJECTEXTEND ROM(LARGE) WARNINGLEVEL
+                    -(2) FLOATFUZZY(3) OPTIMIZE(9,SPEED) DEFINE(NDEBUG=1) INTVECTOR(0X0000) INTPROMOTE INCDIR(C:\WorkSpace\7_SWM\T50\T50¸ü¸Ä³
+                    -¤Ãù±¨¾¯³ÌÐò\HCXY_T50_EFM8BB21F16G-C-QFN20\inc;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/shar
+                    -ed/si8051base;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/EFM8BB2/inc) REGFILE(HCXY_T50_EFM8BB
+                    -21F16G-C-QFN20.ORC) PRINT(.\src\Cpu.lst) COND PAGEWIDTH(120) PAGELENGTH(65) OBJECT(.\src\Cpu.OBJ)
+
+line level    source
+
+   1          /*********************************************************************************************************
+             -************
+   2          ** FILE NAME: cpu.c
+   3          **
+   4          ** PROJECT:  HCXY_X30_RADAR
+   5          ** CPU:      EFM8BB21F16G
+   6          ** COMPILER: SILICON
+   7          ** -------------------------------------------------------------------------------------------------------
+             -------------
+   8          ** VERSION:  V0.1
+   9          ** DATE:     2019.02.21
+  10          **********************************************************************************************************
+             -***********/
+  11          #include <SI_EFM8BB2_Register_Enums.h>                  // SFR declarations
+  12          #include "cpu.h"
+  13          #include "ADC.h"
+  14          #include "Timer.h"
+  15          
+  16          BYTE SFRPAGE_TEMP = 0;
+  17          
+  18          void Cpu_Clk_Init (void)
+  19          {
+  20   1              SFRPAGE = 0x10;
+  21   1              PFE0CN = PFE0CN_PFEN__ENABLED | PFE0CN_FLRT__SYSCLK_BELOW_50_MHZ;
+  22   1      
+  23   1              SFRPAGE = 0x00;
+  24   1              CLKSEL = CLKSEL_CLKSL__HFOSC0 | CLKSEL_CLKDIV__SYSCLK_DIV_1;
+  25   1              CLKSEL = CLKSEL_CLKSL__HFOSC0 | CLKSEL_CLKDIV__SYSCLK_DIV_1;
+  26   1              while ((CLKSEL & CLKSEL_DIVRDY__BMASK) == CLKSEL_DIVRDY__NOT_READY);
+  27   1              CLKSEL = CLKSEL_CLKSL__HFOSC1 | CLKSEL_CLKDIV__SYSCLK_DIV_1;
+  28   1              CLKSEL = CLKSEL_CLKSL__HFOSC1 | CLKSEL_CLKDIV__SYSCLK_DIV_1;
+  29   1              while ((CLKSEL & CLKSEL_DIVRDY__BMASK) == CLKSEL_DIVRDY__NOT_READY);
+  30   1      }
+  31          
+  32          
+  33          void Cpu_WDG_Init(BOOL Switch)//The total interrupt needs to be closed when invoked
+  34          {
+  35   1              SFRPAGE = 0x00;
+  36   1              if(Switch == FUN_ON)
+  37   1              {
+  38   2                      WDTCN = 0x02;//T LFOSC ¡Á 4^(WDTCN[2:0]+3) //T LFOSC = 80khz = 12.5us  so: WDTCN[2:0]=4£¬over is 204.8ms
+  39   2                      WDTCN = 0xFF;//lock the wdt
+  40   2              }
+  41   1              if(Switch == FUN_OFF)
+  42   1              {
+  43   2                      WDTCN = 0xDE;
+  44   2                      WDTCN = 0xAD;
+  45   2              }
+  46   1      }
+  47          
+  48          void Cpu_EnableInterrupt (void)
+C51 COMPILER V9.60.0.0   CPU                                                               08/04/2020 09:19:06 PAGE 2   
+
+  49          {
+  50   1              IE_EA = 1;       //¿ªÆô×ÜÖÐ¶Ï
+  51   1      }
+  52          
+  53          void Cpu_DisableInterrupt (void)
+  54          {
+  55   1              IE_EA = 0;       //¹Ø±Õ×ÜÖÐ¶Ï
+  56   1      }
+  57          
+  58          void Cpu_InitHardwarePort(void)
+  59          {
+  60   1              SFRPAGE = 0x00;
+  61   1      
+  62   1              P0          = 0xED; //P0.0 is adc VDD_REF;               P0.1 is GND_REF;           P0.2 is ECHO_AD;     P0.3 is POWER_AD
+             -;
+  63   1                                              //P0.4 is UART0_TX/DATA_TX;  P0.5 is UART0 RX/DATA_RX;  P0.6 is ECHO_TTL;      P0.7 is 4052_S2;
+  64   1              P0MDOUT =  P0MDOUT_B0__OPEN_DRAIN | P0MDOUT_B1__OPEN_DRAIN | P0MDOUT_B2__OPEN_DRAIN | P0MDOUT_B3__OPEN_DR
+             -AIN
+  65   1                               | P0MDOUT_B4__PUSH_PULL  | P0MDOUT_B5__OPEN_DRAIN | P0MDOUT_B6__OPEN_DRAIN | P0MDOUT_B7__PUSH_PULL;
+  66   1              P0MDIN  =  P0MDIN_B0__ANALOG  | P0MDIN_B1__ANALOG  | P0MDIN_B2__ANALOG  | P0MDIN_B3__ANALOG
+  67   1                               | P0MDIN_B4__DIGITAL | P0MDIN_B5__DIGITAL | P0MDIN_B6__DIGITAL | P0MDIN_B7__DIGITAL;
+  68   1              P0SKIP  =  P0SKIP_B0__SKIPPED | P0SKIP_B1__SKIPPED | P0SKIP_B2__SKIPPED | P0SKIP_B3__SKIPPED
+  69   1                               | P0SKIP_B4__NOT_SKIPPED | P0SKIP_B5__NOT_SKIPPED | P0SKIP_B6__SKIPPED | P0SKIP_B7__SKIPPED;
+  70   1      
+  71   1      
+  72   1              P1          = 0x40;//P1.0 is 4052_S1;     P1.1 is 4052_EN;  P1.2 is DRIVE_L;      P1.3 is NULL;
+  73   1                                         //P1.4 is NULL;        P1.5 is NULL;         P1.6 is NULL;
+  74   1              P1MDOUT = P1MDOUT_B0__PUSH_PULL | P1MDOUT_B1__PUSH_PULL | P1MDOUT_B2__PUSH_PULL | P1MDOUT_B3__OPEN_DRAIN
+  75   1                              | P1MDOUT_B4__OPEN_DRAIN | P1MDOUT_B5__OPEN_DRAIN  | P1MDOUT_B6__OPEN_DRAIN  | P1MDOUT_B7__PUSH_PULL;
+  76   1              P1MDIN =  P1MDIN_B0__DIGITAL | P1MDIN_B1__DIGITAL | P1MDIN_B2__DIGITAL | P1MDIN_B3__DIGITAL
+  77   1                              | P1MDIN_B4__ANALOG  | P1MDIN_B5__ANALOG  | P1MDIN_B6__ANALOG  | P1MDIN_B7__ANALOG;
+  78   1              P1SKIP =  P1SKIP_B0__SKIPPED | P1SKIP_B1__SKIPPED | P1SKIP_B2__SKIPPED| P1SKIP_B3__SKIPPED
+  79   1                              | P1SKIP_B4__SKIPPED | P1SKIP_B5__SKIPPED | P1SKIP_B6__SKIPPED;
+  80   1      
+  81   1      
+  82   1      
+  83   1              XBR2 = XBR2_WEAKPUD__PULL_UPS_DISABLED | XBR2_XBARE__ENABLED
+  84   1                              | XBR2_URT1E__DISABLED | XBR2_URT1RTSE__DISABLED
+  85   1                              | XBR2_URT1CTSE__DISABLED;
+  86   1              XBR0 = XBR0_URT0E__DISABLED| XBR0_SPI0E__DISABLED | XBR0_SMB0E__DISABLED
+  87   1                              | XBR0_CP0E__DISABLED | XBR0_CP0AE__DISABLED | XBR0_CP1E__DISABLED
+  88   1                              | XBR0_CP1AE__DISABLED | XBR0_SYSCKE__DISABLED;
+  89   1              XBR1 = XBR1_PCA0ME__DISABLED | XBR1_ECIE__DISABLED | XBR1_T0E__DISABLED
+  90   1                              | XBR1_T1E__DISABLED | XBR1_T2E__DISABLED;
+  91   1      }
+  92          
+  93          
+  94          void Cpu_Init_Vect(void)
+  95          {
+  96   1      
+  97   1      }
+  98          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    102    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+C51 COMPILER V9.60.0.0   CPU                                                               08/04/2020 09:19:06 PAGE 3   
+
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

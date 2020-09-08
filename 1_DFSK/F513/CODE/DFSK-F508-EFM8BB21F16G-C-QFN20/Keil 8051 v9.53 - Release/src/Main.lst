@@ -1,0 +1,203 @@
+C51 COMPILER V9.53.0.0   MAIN                                                              08/11/2020 17:07:23 PAGE 1   
+
+
+C51 COMPILER V9.53.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\src\Main.OBJ
+COMPILER INVOKED BY: d:\SiliconLabs\SimplicityStudio\v4\developer\toolchains\keil_8051\9.53\BIN\C51.exe G:\Office_inform
+                    -ation\souce_software\1_DFSK\F508\1_CODE\DFSK-F508-EFM8BB21F16G-C-QFN20\src\Main.c OMF2 SMALL DEBUG OBJECTEXTEND ROM(LARG
+                    -E) WARNINGLEVEL(2) FLOATFUZZY(3) OPTIMIZE(9,SPEED) DEFINE(NDEBUG=1) INTVECTOR(0X0000) INTPROMOTE INCDIR(G:\Office_inform
+                    -ation\souce_software\1_DFSK\F508\1_CODE\DFSK-F508-EFM8BB21F16G-C-QFN20\inc;D:/SiliconLabs/SimplicityStudio/v4/developer/
+                    -sdks/8051/v4.1.5//Device/shared/si8051base;D:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.5//Device/EFM8BB2
+                    -/inc) REGFILE(DFSK-F508-EFM8BB21F16G-C-QFN20.ORC) PRINT(.\src\Main.lst) COND PAGEWIDTH(120) PAGELENGTH(65) OBJECT(.\src\
+                    -Main.OBJ)
+
+line level    source
+
+   1          /*********************************************************************************************************
+             -************
+   2          ** FILE NAME: Main.c
+   3          **
+   4          ** PROJECT:  DFSK_F508_RADAR
+   5          ** CPU:      EFM8BB21F16G
+   6          ** COMPILER: SILICON
+   7          ** -------------------------------------------------------------------------------------------------------
+             -------------
+   8          ** VERSION:  V0.1
+   9          ** DATE:     2020.08.06
+  10          **********************************************************************************************************
+             -***********/
+  11          //#include "Includes.h"
+  12          #include "Cpu.h"
+  13          #include "Adc.h"
+  14          #include "InitDevice.h"
+  15          #include "Timer.h"
+  16          #include "Serial.h"
+  17          #include "Uart.h"
+  18          #include "Command.h"
+  19          #include "DetectObj.h"
+  20          #include "EFM8BB2_FlashPrimitives.h"
+  21          
+  22          //-----------------------------------------------------------------------------
+  23          // SiLabs_Startup() Routine
+  24          // ----------------------------------------------------------------------------
+  25          // This function is called immediately after reset, before the initialization
+  26          // code is run in SILABS_STARTUP.A51 (which runs before main() ). This is a
+  27          // useful place to disable the watchdog timer, which is enable by default
+  28          // and may trigger before main() in some instances.
+  29          //-----------------------------------------------------------------------------
+  30          
+  31          //-----------------------------------------------------------------------------
+  32          // Global Variables
+  33          //-----------------------------------------------------------------------------
+  34          #define BUFFER_LENGTH  5
+  35          SI_SEGMENT_VARIABLE(buffer[BUFFER_LENGTH], uint8_t, SI_SEG_XDATA);
+  36          SI_SEGMENT_VARIABLE(errorCount, uint32_t, SI_SEG_XDATA) = 0;
+  37          
+  38          void SiLabs_Startup (void)
+  39          {
+  40   1      }
+  41          
+  42          void InitGlobalVariable(void)
+  43          {
+  44   1          BYTE i;
+  45   1          InitUart0AllVar();
+  46   1      
+  47   1      //    DetObj_InitVariable();
+C51 COMPILER V9.53.0.0   MAIN                                                              08/11/2020 17:07:23 PAGE 2   
+
+  48   1          DetObj_InitAllChannelDistance();
+  49   1          for(i=0;i<ID_SUM;i++)
+  50   1          {
+  51   2              DiagInfo.bSelfCheckResult[i] = 0;
+  52   2              Cmd.bSensorErrCnt[i] = 0;
+  53   2              Cmd.bSensorRun[i] = 0;
+  54   2                      EachSNMaxDistance[i]  = MAX_DETECT_DISTANCE;
+  55   2          }
+  56   1          Cmd.bVechInfoErrCnt = 0;
+  57   1          DetInfo.bID = ID_RL;
+  58   1              DetInfo.bDetState = 0;
+  59   1              DetInfo.bDetTriggerFlag = FALSE;
+  60   1              CmpData.bCurBfNumber = 0;
+  61   1              DiagInfo.bErrCounter = 0;
+  62   1              RawData.bAdcBfIndex = 0;
+  63   1              NearestData.wUpdataDelay = 0;
+  64   1              Serial.byCnt = 0;
+  65   1              Serial.byData = 0;
+  66   1              Serial.bDataHeader = 0;
+  67   1              Serial.bValid = 0;
+  68   1              Serial.CmdHead_Rx = 0;
+  69   1              Serial.bComparatorFlag = 0;
+  70   1              Serial_ISP = &Srl_GetHeader;
+  71   1      
+  72   1          bSensorCheckFlag = TRUE;
+  73   1          wSensorCheckTime = 100;
+  74   1      
+  75   1          //test
+  76   1          for(i=0;i<ID_SUM;i++)
+  77   1          {
+  78   2               Cmd.Debug_ErrCnt[i] = 0;
+  79   2               Cmd.Debug_OKCnt[i] = 0;
+  80   2          }
+  81   1      
+  82   1      }
+  83          
+  84          BYTE Debug_RD1 = 0x00,Debug_RD2 = 0;
+  85          void main (void)
+  86          {
+  87   1              Cpu_Clk_Init();
+  88   1              Cpu_InitHardwarePort();
+  89   1              Cpu_WDG_Init(FUN_ON);
+  90   1              Time_InitTheDelayTimer();
+  91   1              Time_Init1msTimer();                    /* Initial the system timer: 1ms timer. */
+  92   1              Time_Init32msTimer();           /* Initial the 32ms timer for echo detecting. */
+  93   1              InitGlobalVariable();
+  94   1              Time_InitUart0Timer();
+  95   1              Time_InitPCA0();                                /* Initial the PAC0 timer for communication. */
+  96   1              Cpu_EnableInterrupt();
+  97   1              Delay1ms(100);
+  98   1      #if(TEST_CODE_FIXED_ID == FALSE)
+  99   1              {
+ 100   2                              ADC_ReadID();
+ 101   2              }
+ 102   1      #else
+                      {
+                              DetInfo.bID  = ID_MASTER;
+                              Cmd.CmdStatus = DEBUG_MODE;
+                      }
+              #endif
+ 108   1      
+ 109   1              if(DetInfo.bID  == ID_MASTER)
+ 110   1              {
+C51 COMPILER V9.53.0.0   MAIN                                                              08/11/2020 17:07:23 PAGE 3   
+
+ 111   2                      Cmd_GetVechileMode();
+ 112   2              }
+ 113   1      
+ 114   1              //Selfcheck
+ 115   1              while(wSensorCheckTime)
+ 116   1              {
+ 117   2              if(bTimeFlag)
+ 118   2              {
+ 119   3                  bTimeFlag = FALSE;
+ 120   3                  DetObj_DetTheObj();
+ 121   3                  wSensorCheckTime--;
+ 122   3                  CLR_WDT;
+ 123   3              }
+ 124   2              }
+ 125   1              bSensorCheckFlag = FALSE;
+ 126   1      
+ 127   1      
+ 128   1              if(DetInfo.bID  == ID_MASTER)
+ 129   1              {
+ 130   2                      CommunicationMode(COM_Internal);
+ 131   2                      Cmd.wWaitTime = MASTER_WORK_TIME_MAX;
+ 132   2                      Cmd.CmdStatus = MST_DRV_SENSOR_SELFCHECK;
+ 133   2                      Cmd.bID = ID_RL;
+ 134   2      
+ 135   2      #ifdef SPEAKER_USED
+                              Spk_InitVariable();
+                              Spk_InitHardware();
+              #endif
+ 139   2              }
+ 140   1              else
+ 141   1              {
+ 142   2                      Cmd.CmdStatus = SLV_WAIT_CMD;
+ 143   2                      CommunicationMode(COM_Internal);
+ 144   2              }
+ 145   1              DetObj_InitAllChannelDistance();
+ 146   1              while (1)
+ 147   1              {
+ 148   2                      if(bTimeFlag)
+ 149   2                      {
+ 150   3                              bTimeFlag = FALSE;
+ 151   3                              DetObj_DetTheObj();
+ 152   3                              if(DetInfo.bID  == ID_MASTER)
+ 153   3                              {
+ 154   4      #ifdef SPEAKER_USED
+                                              Spk_DriveTheSpeaker();
+              #endif
+ 157   4                              }
+ 158   3                      }
+ 159   2                      CLR_WDT;
+ 160   2              }
+ 161   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    350    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      9    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+C51 COMPILER V9.53.0.0   MAIN                                                              08/11/2020 17:07:23 PAGE 4   
+
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

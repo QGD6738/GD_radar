@@ -1,0 +1,330 @@
+C51 COMPILER V9.60.0.0   UART                                                              08/08/2020 16:35:50 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN .\src\Uart.OBJ
+COMPILER INVOKED BY: c:\SiliconLabs\SimplicityStudio\v4\developer\toolchains\keil_8051\9.60\BIN\C51.exe C:\WorkSpace\3_C
+                    -HAN\4_M80\1_CODE\DFSK-F516-EFM8BB21F16G-C-QFN20_20200107\src\Uart.c OMF2 SMALL DEBUG OBJECTEXTEND ROM(LARGE) WARNINGLEVE
+                    -L(2) FLOATFUZZY(3) OPTIMIZE(9,SPEED) DEFINE(NDEBUG=1) INTVECTOR(0X0000) INTPROMOTE INCDIR(C:\WorkSpace\3_CHAN\4_M80\1_CO
+                    -DE\DFSK-F516-EFM8BB21F16G-C-QFN20_20200107\inc;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/sha
+                    -red/si8051base;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/EFM8BB2/inc) REGFILE(DFSK-F516-EFM8
+                    -BB21F16G-C-QFN20_20200107.ORC) PRINT(.\src\Uart.lst) COND PAGEWIDTH(120) PAGELENGTH(65) OBJECT(.\src\Uart.OBJ)
+
+line level    source
+
+   1          #include "SI_EFM8BB2_DEFS.h"
+   2          #include "Uart.h"
+   3          #include "UartCfg.h"
+   4          #include "Command.h"
+   5          #include "Cpu.h"
+   6          #include "Timer.h"
+   7          
+   8          BOOL Uart0TX_NOTOK_Flag = TRUE;
+   9          BOOL Uart0TX_ALL_Flag = FALSE;
+  10          E_UartReceiveFlag Uart0RX_OK_Flag = Rec_ERR;
+  11          Uart0_ContextType gslinContext;
+  12          Uart0_ReceiveInfoType   gUart0ReceivePduInfo;
+  13          
+  14          void   Uart0_Init(void)
+  15          {
+  16   1              SFRPAGE_TEMP = SFRPAGE;
+  17   1              SFRPAGE = 0x20;
+  18   1              P0SKIP &= (~P0SKIP_B4__SKIPPED);
+  19   1              P0SKIP &= (~P0SKIP_B5__SKIPPED);
+  20   1              XBR0   |=  XBR0_URT0E__ENABLED;
+  21   1      
+  22   1              SCON0 = SCON0_SMODE__9_BIT | SCON0_REN__RECEIVE_ENABLED;
+  23   1      
+  24   1              SFRPAGE = 0x10;
+  25   1              IE  |= IE_ES0__ENABLED;         //00; Set Interrupt Priority; 11 is highest; 00 is lowest;
+  26   1              IP  &= (~0x10);
+  27   1              IPH &= (~0x10);
+  28   1              SFRPAGE = SFRPAGE_TEMP;
+  29   1      
+  30   1              StartTheUart0Timer();
+  31   1      }
+  32          
+  33          void   UART0_INTRX_Dis(void)
+  34          {
+  35   1              DECL_PAGE;
+  36   1              SET_PAGE(UART0_SFR_PAGE);
+  37   1      
+  38   1              SCON0_REN = 0;
+  39   1              SCON0_RI = 0;
+  40   1      
+  41   1              RESTORE_PAGE;
+  42   1      
+  43   1      }
+  44          
+  45          void   UART0_INTRX_En(void)
+  46          {
+  47   1              DECL_PAGE;
+  48   1              SET_PAGE(UART0_SFR_PAGE);
+  49   1      
+  50   1              SCON0_REN = 1;
+  51   1              SCON0_RI = 0;
+C51 COMPILER V9.60.0.0   UART                                                              08/08/2020 16:35:50 PAGE 2   
+
+  52   1      
+  53   1              RESTORE_PAGE;
+  54   1      
+  55   1      }
+  56          
+  57          void   UART0_Moudle_Dis(void)
+  58          {
+  59   1              SFRPAGE_TEMP = SFRPAGE;
+  60   1              SFRPAGE = 0x20;
+  61   1              P0SKIP |= P0SKIP_B7__SKIPPED;
+  62   1              P0SKIP |= P1SKIP_B0__SKIPPED;
+  63   1              XBR0   &=  (~XBR0_URT0E__ENABLED);
+  64   1      
+  65   1              SCON0 = SCON0_SMODE__9_BIT | SCON0_REN__RECEIVE_ENABLED;
+  66   1      
+  67   1              SFRPAGE = 0x10;
+  68   1              IE  &= (~IE_ES0__ENABLED);              //00; Set Interrupt Priority; 11 is highest; 00 is lowest;
+  69   1              IP  &= (~0x10);
+  70   1              IPH &= (~0x10);
+  71   1              SFRPAGE = SFRPAGE_TEMP;
+  72   1      }
+  73          
+  74          void UART0_ModeDataL()
+  75          {
+  76   1              SFRPAGE_TEMP = SFRPAGE;
+  77   1              SFRPAGE = 0x20;
+  78   1              P0SKIP &= (~P0SKIP_B4__SKIPPED);
+  79   1              SFRPAGE = SFRPAGE_TEMP;
+  80   1      }
+  81          
+  82          
+  83          void UART0_ModeDataH()
+  84          {
+  85   1              SFRPAGE_TEMP = SFRPAGE;
+  86   1              SFRPAGE = 0x20;
+  87   1              P0SKIP |= P0SKIP_B4__SKIPPED;
+  88   1              SFRPAGE = SFRPAGE_TEMP;
+  89   1      }
+  90          
+  91          
+  92          
+  93          void   UART0_WriteByte(WORD dataTx)
+  94          {
+  95   1              DECL_PAGE;
+  96   1              SET_PAGE(UART0_SFR_PAGE);
+  97   1      
+  98   1      //      while(Uart0TX_NOTOK_Flag)
+  99   1      //      {
+ 100   1      //              CLR_WDT;
+ 101   1      //      }
+ 102   1      //      Uart0TX_NOTOK_Flag = TRUE;
+ 103   1              SCON0_TB8 = (dataTx>>8);
+ 104   1              SBUF0 = (BYTE)(dataTx & 0x00FF);
+ 105   1              while(Uart0TX_NOTOK_Flag)
+ 106   1              {
+ 107   2                      CLR_WDT;
+ 108   2              }
+ 109   1              Uart0TX_NOTOK_Flag = TRUE;
+ 110   1              RESTORE_PAGE;
+ 111   1      }
+ 112          
+ 113          void   UART0_RXData(WORD rxdata)
+ 114          {
+C51 COMPILER V9.60.0.0   UART                                                              08/08/2020 16:35:50 PAGE 3   
+
+ 115   1              BYTE i;
+ 116   1              Uart0_ReceiveInfoType* pCtt;
+ 117   1              pCtt = &gUart0ReceivePduInfo;
+ 118   1      
+ 119   1      //      if(rxdata == 0xAA ||
+ 120   1      //              rxdata == 0xCC  )
+ 121   1      //      {
+ 122   1      //              pCtt->pReceiveData = (pCtt->ReceiveBuff);
+ 123   1      //              pCtt->ReceiveCheckSum = 0;
+ 124   1      //              pCtt->ReceiveDatalen = 4;
+ 125   1      //              pCtt->ReceiveByteIdx = 0;
+ 126   1      //              *(pCtt->pReceiveData) = rxdata;
+ 127   1      //      }
+ 128   1      //      if(pCtt->ReceiveBuff[0] == 0xAA ||
+ 129   1      //         pCtt->ReceiveBuff[0] == 0xCC )
+ 130   1      //      {
+ 131   1      ////            *(pCtt->pReceiveData) = rxdata;
+ 132   1      ////            (pCtt->pReceiveData)++;
+ 133   1      //              pCtt->ReceiveBuff[pCtt->ReceiveByteIdx] = rxdata;
+ 134   1      //              pCtt->ReceiveByteIdx++;
+ 135   1      //
+ 136   1      //              if(pCtt->ReceiveByteIdx == pCtt->ReceiveDatalen)
+ 137   1      //              {
+ 138   1      //                      pCtt->pReceiveData = (pCtt->ReceiveBuff);
+ 139   1      //                      if(pCtt->ReceiveBuff[2] == FRAME_TAIL(pCtt->ReceiveBuff[0]))   //Frame Head: XX  Frame Tail: XF
+ 140   1      //                      {
+ 141   1      //                              for(i=0;i<(pCtt->ReceiveDatalen);i++)   //Byte even
+ 142   1      //                              {
+ 143   1      //                                      if(((pCtt->ReceiveBuff[i]>>8)&0x01) == CalcByteEVEN(pCtt->ReceiveBuff[i]))
+ 144   1      //                                      {
+ 145   1      //                                              pCtt->ReceiveERRFlag = NO_ERR;
+ 146   1      //                                      }
+ 147   1      //                                      else
+ 148   1      //                                      {
+ 149   1      //                                              pCtt->ReceiveERRFlag = EVEN_ERR;
+ 150   1      //                                              break;
+ 151   1      //                                      }
+ 152   1      //                              }
+ 153   1      //                      }
+ 154   1      //                      else   //Frame tail is not match frame head
+ 155   1      //                      {
+ 156   1      //                              pCtt->ReceiveERRFlag = FRAME_ERR;
+ 157   1      //                      }
+ 158   1      //
+ 159   1      //                      if(pCtt->ReceiveERRFlag == NO_ERR)              //Frame checksum
+ 160   1      //                      {
+ 161   1      //                              for(i=0;i<(pCtt->ReceiveDatalen-1);i++)
+ 162   1      //                              {
+ 163   1      //                                      (pCtt->ReceiveCheckSum) += (*((pCtt->pReceiveData) + i) & 0x00FF);
+ 164   1      //                              }
+ 165   1      //
+ 166   1      //                              (pCtt->ReceiveCheckSum) = (pCtt->ReceiveCheckSum)%256;
+ 167   1      //
+ 168   1      //                              if((pCtt->ReceiveCheckSum) == pCtt->ReceiveBuff[3])
+ 169   1      //                              {
+ 170   1      //                                      pCtt->ReceiveERRFlag = NO_ERR;
+ 171   1      //                                      ReceiveFramereCorresponding(pCtt->ReceiveBuff[0]);
+ 172   1      //                                      Uart0RX_OK_Flag = TRUE;
+ 173   1      //                              }
+ 174   1      //                              else
+ 175   1      //                              {
+ 176   1      //                                      pCtt->ReceiveERRFlag = CHECKSUN_ERR;
+ 177   1      //                                      Uart0RX_OK_Flag = FALSE;
+C51 COMPILER V9.60.0.0   UART                                                              08/08/2020 16:35:50 PAGE 4   
+
+ 178   1      //                              }
+ 179   1      //                      }
+ 180   1      //              }
+ 181   1      //      }
+ 182   1      //
+ 183   1      //      if(pCtt->ReceiveERRFlag > NO_ERR)
+ 184   1      //      {
+ 185   1      //              InitUart0ReceiveVar();
+ 186   1      //      }
+ 187   1      
+ 188   1              if(rxdata == 0xAA ||
+ 189   1                      rxdata == 0xCC  )
+ 190   1              {
+ 191   2                      pCtt->pReceiveData = (pCtt->ReceiveBuff);
+ 192   2                      pCtt->ReceiveCheckSum = 0;
+ 193   2                      pCtt->ReceiveDatalen = VechileDataLen;
+ 194   2                      pCtt->ReceiveByteIdx = 0;
+ 195   2                      *(pCtt->pReceiveData) = rxdata;
+ 196   2              }
+ 197   1              if(pCtt->ReceiveBuff[0] == 0xAA ||
+ 198   1                 pCtt->ReceiveBuff[0] == 0xCC )
+ 199   1              {
+ 200   2                      pCtt->ReceiveBuff[pCtt->ReceiveByteIdx] = rxdata;
+ 201   2                      pCtt->ReceiveByteIdx++;
+ 202   2      
+ 203   2                      if(pCtt->ReceiveByteIdx == pCtt->ReceiveDatalen)
+ 204   2                      {
+ 205   3                              pCtt->pReceiveData = (pCtt->ReceiveBuff);
+ 206   3                              if(pCtt->ReceiveBuff[2] == FRAME_TAIL(pCtt->ReceiveBuff[0]))   //Frame Head: XX  Frame Tail: XF
+ 207   3                              {
+ 208   4                                      for(i=0;i<(pCtt->ReceiveDatalen);i++)   //Byte even
+ 209   4                                      {
+ 210   5                                              if(((pCtt->ReceiveBuff[i]>>8)&0x01) == CalcByteEVEN(pCtt->ReceiveBuff[i]))
+ 211   5                                              {
+ 212   6                                                      pCtt->ReceiveERRFlag = NO_ERR;
+ 213   6                                              }
+ 214   5                                              else
+ 215   5                                              {
+ 216   6                                                      pCtt->ReceiveERRFlag = EVEN_ERR;
+ 217   6                                                      break;
+ 218   6                                              }
+ 219   5                                      }
+ 220   4                              }
+ 221   3                              else   //Frame tail is not match frame head
+ 222   3                              {
+ 223   4                                      pCtt->ReceiveERRFlag = FRAME_ERR;
+ 224   4                              }
+ 225   3      
+ 226   3                              if(pCtt->ReceiveERRFlag == NO_ERR)              //Frame checksum
+ 227   3                              {
+ 228   4                                      pCtt->ReceiveERRFlag = NO_ERR;
+ 229   4                                      ReceiveFramereCorresponding(pCtt->ReceiveBuff[0]);
+ 230   4                                      if(pCtt->ReceiveBuff[0] == 0xAA)
+ 231   4                                      {
+ 232   5                                              Uart0RX_OK_Flag = Rec_VechiMode;
+ 233   5                                      }
+ 234   4                                      if(pCtt->ReceiveBuff[0] == 0xCC)
+ 235   4                                      {
+ 236   5                                              Uart0RX_OK_Flag = Rec_VechiInfo;
+ 237   5                                      }
+ 238   4                                      else
+ 239   4                                      {
+ 240   5                                              InitUart0ReceiveVar();
+C51 COMPILER V9.60.0.0   UART                                                              08/08/2020 16:35:50 PAGE 5   
+
+ 241   5                                      }
+ 242   4                              }
+ 243   3                              else
+ 244   3                              {
+ 245   4                                      Uart0RX_OK_Flag = FALSE;
+ 246   4                                      InitUart0ReceiveVar();
+ 247   4                              }
+ 248   3                      }
+ 249   2      
+ 250   2                      if(pCtt->ReceiveERRFlag > NO_ERR)
+ 251   2                      {
+ 252   3                              InitUart0ReceiveVar();
+ 253   3                      }
+ 254   2              }
+ 255   1      
+ 256   1              if(pCtt->ReceiveByteIdx > VechileDataLen ||
+ 257   1                 pCtt->ReceiveDatalen > VechileDataLen)
+ 258   1              {
+ 259   2                      InitUart0ReceiveVar();
+ 260   2              }
+ 261   1      
+ 262   1      
+ 263   1      }
+ 264          
+ 265          
+ 266          SI_INTERRUPT(UART0_ISR, UART0_IRQn)
+ 267          {
+ 268   1              BYTE scon0_buff,sbuf0_buff;
+ 269   1              WORD data_9bit;//rb8_buff;
+ 270   1              data_9bit = 0x0000;
+ 271   1              scon0_buff = SCON0;
+ 272   1      //      if(SCON0_RI__SET == (scon0_buff & SCON0_RI__BMASK))
+ 273   1              if(0x01 == (scon0_buff & 0x01))
+ 274   1              {
+ 275   2                      SCON0_RI = 0;
+ 276   2                      sbuf0_buff = SBUF0;
+ 277   2                      data_9bit = (((WORD)(scon0_buff&0x04))<<6) | sbuf0_buff;
+ 278   2                      UART0_RXData(data_9bit);
+ 279   2              }
+ 280   1      
+ 281   1              if(SCON0_TI__SET == (scon0_buff & SCON0_TI__BMASK))
+ 282   1              {
+ 283   2                      SCON0_TI = 0;
+ 284   2                      Uart0TX_NOTOK_Flag = FALSE;
+ 285   2              }
+ 286   1      }
+ 287          
+ 288          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    655    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     35       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+C51 COMPILER V9.60.0.0   UART                                                              08/08/2020 16:35:50 PAGE 6   
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

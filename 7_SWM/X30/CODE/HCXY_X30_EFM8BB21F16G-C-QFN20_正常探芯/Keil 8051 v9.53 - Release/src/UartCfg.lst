@@ -1,0 +1,34 @@
+C51 COMPILER V9.60.0.0   UARTCFG                                                           08/03/2020 08:45:47 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE UARTCFG
+OBJECT MODULE PLACED IN .\src\UartCfg.OBJ
+COMPILER INVOKED BY: c:\SiliconLabs\SimplicityStudio\v4\developer\toolchains\keil_8051\9.60\BIN\C51.exe C:\WorkSpace\7_S
+                    -WM\X30\HCXY_X30_EFM8BB21F16G-C-QFN20_Õý³£Ì½Ð¾\src\UartCfg.c OMF2 SMALL DEBUG OBJECTEXTEND ROM(LARGE) WARNINGLEVEL(2) FLO
+                    -ATFUZZY(3) OPTIMIZE(9,SPEED) DEFINE(NDEBUG=1) INTVECTOR(0X0000) INTPROMOTE INCDIR(C:\WorkSpace\7_SWM\X30\HCXY_X30_EFM8BB
+                    -21F16G-C-QFN20_Õý³£Ì½Ð¾\inc;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/shared/si8051base;C:/S
+                    -iliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/EFM8BB2/inc) REGFILE(HCXY_X30_EFM8BB21F16G-C-QFN20_Õý³
+                    -£Ì½Ð¾.ORC) PRINT(.\src\UartCfg.lst) COND PAGEWIDTH(120) PAGELENGTH(65) OBJECT(.\src\UartCfg.OBJ)
+
+line level    source
+
+*** WARNING C329 IN LINE 12 OF C:\WorkSpace\7_SWM\X30\HCXY_X30_EFM8BB21F16G-C-QFN20_Õ³£Ì½Ð¾\src\UartCfg.c: single-line c
+             -omment contains line-continuation
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     40    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     16    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

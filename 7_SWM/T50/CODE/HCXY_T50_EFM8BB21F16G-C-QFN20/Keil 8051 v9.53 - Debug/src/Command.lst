@@ -1,0 +1,332 @@
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/04/2020 09:18:56 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE COMMAND
+OBJECT MODULE PLACED IN .\src\Command.OBJ
+COMPILER INVOKED BY: c:\SiliconLabs\SimplicityStudio\v4\developer\toolchains\keil_8051\9.60\BIN\C51.exe C:\WorkSpace\7_S
+                    -WM\T50\T50更改长鸣报警程序\HCXY_T50_EFM8BB21F16G-C-QFN20\src\Command.c OMF2 LARGE DEBUG OBJECTEXTEND ROM(LARGE) WARNINGL
+                    -EVEL(2) FLOATFUZZY(3) OPTIMIZE(8,SPEED) DEFINE(DEBUG=1) INTVECTOR(0X0000) INTPROMOTE INCDIR(C:\WorkSpace\7_SWM\T50\T50更
+                    -改长鸣报警程序\HCXY_T50_EFM8BB21F16G-C-QFN20\inc;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/s
+                    -hared/si8051base;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/EFM8BB2/inc) PRINT(.\src\Command.
+                    -lst) COND PAGEWIDTH(120) PAGELENGTH(65) OBJECT(.\src\Command.OBJ)
+
+line level    source
+
+   1          #include "cpu.h"
+   2          #include "Timer.h"
+   3          #include "Serial.h"
+   4          #include "Uart.h"
+   5          #include "Command.h"
+   6          #include "DetectObj.h"
+   7          #include "Adc.h"
+   8          #include "EFM8BB2_FlashPrimitives.h"
+   9          
+  10          stCmd xdata Cmd;
+  11          
+  12          void Cmd_ReadID(void)
+  13          {
+  14   1      
+  15   1      
+  16   1      }
+  17          
+  18          
+  19          void Cmd_Process(void)
+  20          {
+  21   1              BYTE i;
+  22   1              /*
+  23   1              if(ADC.Power_OK_Flag == FALSE)
+  24   1              {
+  25   1                      return;
+  26   1              }
+  27   1              */
+  28   1          if(bSensorCheckFlag == TRUE)
+  29   1          {
+  30   2              DetInfo.bDetTriggerFlag = TRUE;
+  31   2              return;
+  32   2          }
+  33   1      
+  34   1              switch(Cmd.CmdStatus)
+  35   1              {
+  36   2                      case MST_SEND_SELF_TO_BCM:
+  37   2                      {
+  38   3      
+  39   3                              break;
+  40   3                      }
+  41   2      
+  42   2                      case MST_DRV_SENSOR:
+  43   2                      {
+  44   3      //                      //TEST
+  45   3      //                      DetInfo.bID = ID_RL;
+  46   3                              Cmd_SetChannel();
+  47   3                              DetInfo.bDetCompleteFlag = FALSE;
+  48   3                              DetInfo.bDetTriggerFlag  = TRUE;
+  49   3                              Cmd.wWaitTime = MASTER_WORK_TIME_MAX;
+  50   3                              Cmd.CmdStatus = MST_WAIT_SENSOR_DATA;
+  51   3                              break;
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/04/2020 09:18:56 PAGE 2   
+
+  52   3                      }
+  53   2      
+  54   2                      case MST_WAIT_SENSOR_DATA:
+  55   2                      {
+  56   3                              if(Cmd.wWaitTime > 0)
+  57   3                              {
+  58   4                                      if(DetInfo.bDetCompleteFlag)
+  59   4                                      {
+  60   5                                              Cmd_NextSensorDet(FALSE);
+  61   5                                      }
+  62   4                                      Cmd.wWaitTime--;
+  63   4                              }
+  64   3                              else
+  65   3                              {
+  66   4                                      if(++Cmd.bSensorErrCnt[DetInfo.bID] >= SENSOR_EER_THRE_SENSOR)
+  67   4                                      {
+  68   5                                              Cmd.bSensorErrCnt[DetInfo.bID] = SENSOR_EER_THRE_SENSOR;
+  69   5                                              DiagInfo.bSelfCheckResult[DetInfo.bID] = 1;
+  70   5                                              NearestData.bEachNearestDistance[DetInfo.bID] = NO_OBJ;
+  71   5                                      }
+  72   4                                      Cmd_NextSensorDet(FALSE);
+  73   4                              }
+  74   3                              break;
+  75   3                      }
+  76   2      
+  77   2                      case MST_SEND_DISTANCE_TO_BCM:
+  78   2                      {
+  79   3                              Cmd_UpdataDistance();
+  80   3                              Cmd_SendDistancetoBCM();
+  81   3                              Cmd_NextSensorDet(TRUE);
+  82   3                              Cmd.CmdStatus = MST_DRV_SENSOR;
+  83   3                              break;
+  84   3                      }
+  85   2      
+  86   2                      case SLV_WAIT_CMD:
+  87   2                      {
+  88   3      
+  89   3      
+  90   3                              break;
+  91   3                      }
+  92   2      
+  93   2                      case SLV_DISTANCE_BACK:
+  94   2                      {
+  95   3      
+  96   3                              break;
+  97   3                      }
+  98   2      
+  99   2                      case SLV_CALIBRATION:
+ 100   2                      {
+ 101   3      
+ 102   3                              break;
+ 103   3                      }
+ 104   2      
+ 105   2                      case SLV_CALIBRATION_BACK:
+ 106   2                      {
+ 107   3      
+ 108   3                              break;
+ 109   3                      }
+ 110   2      
+ 111   2                      default:
+ 112   2                      ;
+ 113   2              }
+ 114   1      }
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/04/2020 09:18:56 PAGE 3   
+
+*** WARNING C280 IN LINE 21 OF C:\WorkSpace\7_SWM\T50\T50更改长鸣报警程序\HCXY_T50_EFM8BB21F16G-C-QFN20\src\Command.c: '
+             -i': unreferenced local variable
+ 115          
+ 116          void Cmd_SaveData(void)
+ 117          {
+ 118   1      
+ 119   1      }
+ 120          
+ 121          void Cmd_UpdataDistance(void)
+ 122          {
+ 123   1              Cmd_DistancetoComInfo();
+ 124   1      
+ 125   1      //      MsgRadar_Distance._bit.RPADetectionRL = Cmd.bDistance[ID_RL];
+ 126   1      //      MsgRadar_Distance._bit.RPADetectionRML = Cmd.bDistance[ID_RML];
+ 127   1      //      MsgRadar_Distance._bit.RPADetectionRR = Cmd.bDistance[ID_RR];
+ 128   1              MsgRadar_Distance[1] = Cmd.bDistance[ID_RL];
+ 129   1              MsgRadar_Distance[2] = Cmd.bDistance[ID_RML];
+ 130   1              MsgRadar_Distance[3] = Cmd.bDistance[ID_RR];
+ 131   1      }
+ 132          
+ 133          void Cmd_DistancetoComInfo(void)
+ 134          {
+ 135   1              BYTE i;
+ 136   1              for(i=0;i<ID_SUM;i++)                                   //distance value cale to command data
+ 137   1              {
+ 138   2                      if(NearestData.bEachNearestDistance[i]<=30)
+ 139   2                      {
+ 140   3                              Cmd.bDistance[i] = 0x03;
+ 141   3                      }
+ 142   2                      else if(NearestData.bEachNearestDistance[i] <= MAX_DETECT_DISTANCE)
+ 143   2                      {
+ 144   3                              Cmd.bDistance[i] = ((NearestData.bEachNearestDistance[i]+5)/10);  //四舍五入
+ 145   3                      }
+ 146   2                      else
+ 147   2                      {
+ 148   3                              Cmd.bDistance[i] = 0x19;
+ 149   3                              //Cmd.bDistance[i] = 0x30;
+ 150   3                      }
+ 151   2              }
+ 152   1      }
+ 153          
+ 154          void Cmd_NextSensorSelf(void)
+ 155          {
+ 156   1      //    Cmd.CmdStatus = MST_DRV_SENSOR_SELFCHECK;
+ 157   1      //    Cmd.bID++;
+ 158   1      //    if(Cmd.bID == ID_MASTER)Cmd.bID++;
+ 159   1      //    if(Cmd.bID >= Cmd.bUsedSnrNUM)
+ 160   1      //    {
+ 161   1      //        Cmd.bID = ID_RL;
+ 162   1      //        Cmd.bID = MST_SEND_SELF_TO_BCM;
+ 163   1      //    }
+ 164   1      }
+ 165          
+ 166          void Cmd_NextSensorDet(BYTE ForceCutFlag)
+ 167          {
+ 168   1      //      BYTE cnt,sta;
+ 169   1      //
+ 170   1              if(ForceCutFlag == TRUE)
+ 171   1              {
+ 172   2                      DetInfo.bID++;
+ 173   2                      if(DetInfo.bID == ID_RML)
+ 174   2                      {
+ 175   3                              DetInfo.bID = ID_RML+1;
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/04/2020 09:18:56 PAGE 4   
+
+ 176   3                      }
+ 177   2                      DetInfo.bID = DetInfo.bID % DetInfo.bDetSnNum;
+ 178   2                      Cmd.CmdStatus = MST_DRV_SENSOR;
+ 179   2              }
+ 180   1              else
+ 181   1              {
+ 182   2                      if(DetInfo.bID == ID_RR)
+ 183   2                      {
+ 184   3                              Cmd.CmdStatus = MST_SEND_DISTANCE_TO_BCM;
+ 185   3                      }
+ 186   2                      else
+ 187   2                      {
+ 188   3                              DetInfo.bID++;
+ 189   3                              if(DetInfo.bID == ID_RML)
+ 190   3                              {
+ 191   4                                      DetInfo.bID = ID_RML+1;
+ 192   4                              }
+ 193   3                              DetInfo.bID = DetInfo.bID % DetInfo.bDetSnNum;
+ 194   3                              Cmd.CmdStatus = MST_DRV_SENSOR;
+ 195   3                      }
+ 196   2              }
+ 197   1      }
+ 198          
+ 199          void Cmd_SetChannel(void)
+ 200          {
+ 201   1      //      SW_DIS;
+ 202   1              switch(DetInfo.bID)
+ 203   1              {
+ 204   2                      case ID_RL:
+ 205   2                      {
+ 206   3                               SW_SET_RL_INPUT;
+ 207   3                      }
+ 208   2                              break;
+ 209   2      //              case ID_RML:
+ 210   2      //              {
+ 211   2      //                      SW_SET_RML_INPUT;
+ 212   2      //              }
+ 213   2      //              break;
+ 214   2                      case ID_RR:
+ 215   2                      {
+ 216   3                              SW_SET_RR_INPUT;
+ 217   3                      }
+ 218   2                      break;
+ 219   2                      default:
+ 220   2                      {
+ 221   3                              SW_SET_RL_INPUT;
+ 222   3                              DetInfo.bID = ID_RL;
+ 223   3                      }
+ 224   2                      break;
+ 225   2              }
+ 226   1      }
+ 227          
+ 228          
+ 229          
+ 230          void Cmd_ClearBuffer(void)
+ 231          {
+ 232   1          BYTE i;
+ 233   1          for(i=0; i<SN_NUM; i++)
+ 234   1          {
+ 235   2                NearestData.bEachNearestDistance[i] = 0xFF;
+ 236   2          }
+ 237   1      }
+ 238          
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/04/2020 09:18:56 PAGE 5   
+
+ 239          void Cmd_SendDistancetoBCM(void)
+ 240          {
+ 241   1              BYTE i,checksum;
+ 242   1          WORD checksum_temp;
+ 243   1          checksum = 0;
+ 244   1          checksum_temp = (WORD)0x0000;
+ 245   1      
+ 246   1              for(i=1;i<(MsgRadar_Distance_Frame_Len-2);i++)
+ 247   1              {
+ 248   2                      checksum_temp += (BYTE)(MsgRadar_Distance[i] & 0xFF);
+ 249   2                      if(checksum_temp > 0xFF)
+ 250   2                      {
+ 251   3                              checksum_temp = checksum_temp-0xFF;
+ 252   3                      }
+ 253   2              }
+ 254   1              if(checksum_temp <= 0xFF)
+ 255   1              {
+ 256   2                      checksum = 0xFF-checksum_temp;
+ 257   2              }
+ 258   1              MsgRadar_Distance[MsgRadar_Distance_Frame_Len-2] = checksum;
+ 259   1          for(i=0;i<MsgRadar_Distance_Frame_Len;i++)
+ 260   1              {
+ 261   2                      UART1_WriteByte(MsgRadar_Distance[i]);
+ 262   2              }
+ 263   1      }
+ 264          
+ 265          BYTE Cmd_VechileCfgCheck(void)
+ 266          {
+ 267   1      
+ 268   1      
+ 269   1              return FALSE;
+ 270   1      }
+ 271          
+ 272          
+ 273          
+ 274          
+ 275          
+ 276          
+ 277          
+ 278          
+ 279          
+ 280          
+ 281          
+ 282          
+ 283          
+ 284          
+ 285          
+ 286          
+ 287          
+ 288          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    610    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     24       2
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/04/2020 09:18:56 PAGE 6   
+
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

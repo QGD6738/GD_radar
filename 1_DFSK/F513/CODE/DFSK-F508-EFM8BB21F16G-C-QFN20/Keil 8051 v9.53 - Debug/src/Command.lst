@@ -1,0 +1,924 @@
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/31/2020 09:15:06 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE COMMAND
+OBJECT MODULE PLACED IN .\src\Command.OBJ
+COMPILER INVOKED BY: c:\SiliconLabs\SimplicityStudio\v4\developer\toolchains\keil_8051\9.60\BIN\C51.exe C:\WorkSpace\1_D
+                    -FSK\F508\CODE\DFSK-F508-EFM8BB21F16G-C-QFN20\src\Command.c OMF2 LARGE DEBUG OBJECTEXTEND ROM(LARGE) WARNINGLEVEL(2) FLOA
+                    -TFUZZY(3) OPTIMIZE(8,SPEED) DEFINE(DEBUG=1) INTVECTOR(0X0000) INTPROMOTE INCDIR(C:\WorkSpace\1_DFSK\F508\CODE\DFSK-F508-
+                    -EFM8BB21F16G-C-QFN20\inc;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/shared/si8051base;C:/Sili
+                    -conLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/EFM8BB2/inc) PRINT(.\src\Command.lst) COND PAGEWIDTH(120)
+                    - PAGELENGTH(65) OBJECT(.\src\Command.OBJ)
+
+line level    source
+
+   1          
+   2          /*********************************************************************************************************
+             -************
+   3          ** FILE NAME: Command.c
+   4          **
+   5          ** PROJECT:  DFSK_F508_RADAR
+   6          ** CPU:      EFM8BB21F16G
+   7          ** COMPILER: SILICON
+   8          ** -------------------------------------------------------------------------------------------------------
+             -------------
+   9          ** VERSION:  V0.1
+  10          ** DATE:     2020.08.06
+  11          **********************************************************************************************************
+             -***********/
+  12          #include "cpu.h"
+  13          #include "Timer.h"
+  14          #include "Serial.h"
+  15          #include "Uart.h"
+  16          #include "Command.h"
+  17          #include "DetectObj.h"
+  18          #include "Adc.h"
+  19          #include "EFM8BB2_FlashPrimitives.h"
+  20          
+  21          stCmd  xdata Cmd;
+  22          unVhcCfgSta xdata SnrCfgSta;
+  23          
+  24          
+  25          void Cmd_ReleaseVechileCfgInfo(BYTE VhCcfg)
+  26          {
+  27   1              switch(VhCcfg)
+  28   1              {
+  29   2                      case 2:
+  30   2                              SnrCfgSta._Byte  = 0x06;
+  31   2                              EachSNMaxDistance[ID_RL]  = SN_DISTANCE_2Snr_RL;
+  32   2                              EachSNMaxDistance[ID_RML] = SN_DISTANCE_2Snr_RML;
+  33   2                              EachSNMaxDistance[ID_RMR] = SN_DISTANCE_2Snr_RMR;
+  34   2                              EachSNMaxDistance[ID_RR]  = SN_DISTANCE_2Snr_RR;
+  35   2                              EachSNMaxDistance[ID_FL]  = SN_DISTANCE_2Snr_FL;
+  36   2                              EachSNMaxDistance[ID_FR]  = SN_DISTANCE_2Snr_FR;
+  37   2                      break;
+  38   2                      case 3:
+  39   2                              SnrCfgSta._Byte  = 0x0B;
+  40   2                              EachSNMaxDistance[ID_RL]  = SN_DISTANCE_3Snr_RL;
+  41   2                              EachSNMaxDistance[ID_RML] = SN_DISTANCE_3Snr_RML;
+  42   2                              EachSNMaxDistance[ID_RMR] = SN_DISTANCE_3Snr_RMR;
+  43   2                              EachSNMaxDistance[ID_RR]  = SN_DISTANCE_3Snr_RR;
+  44   2                              EachSNMaxDistance[ID_FL]  = SN_DISTANCE_3Snr_FL;
+  45   2                              EachSNMaxDistance[ID_FR]  = SN_DISTANCE_3Snr_FR;
+  46   2                      break;
+  47   2                      case 4:
+  48   2                              SnrCfgSta._Byte  = 0x0F;
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/31/2020 09:15:06 PAGE 2   
+
+  49   2                              EachSNMaxDistance[ID_RL]  = SN_DISTANCE_4Snr_RL;
+  50   2                              EachSNMaxDistance[ID_RML] = SN_DISTANCE_4Snr_RML;
+  51   2                              EachSNMaxDistance[ID_RMR] = SN_DISTANCE_4Snr_RMR;
+  52   2                              EachSNMaxDistance[ID_RR]  = SN_DISTANCE_4Snr_RR;
+  53   2                              EachSNMaxDistance[ID_FL]  = SN_DISTANCE_4Snr_FL;
+  54   2                              EachSNMaxDistance[ID_FR]  = SN_DISTANCE_4Snr_FR;
+  55   2                      break;
+  56   2                      case 5:
+  57   2                              SnrCfgSta._Byte  = 0x3B;
+  58   2                              EachSNMaxDistance[ID_RL]  = SN_DISTANCE_5Snr_RL;
+  59   2                              EachSNMaxDistance[ID_RML] = SN_DISTANCE_5Snr_RML;
+  60   2                              EachSNMaxDistance[ID_RMR] = SN_DISTANCE_5Snr_RMR;
+  61   2                              EachSNMaxDistance[ID_RR]  = SN_DISTANCE_5Snr_RR;
+  62   2                              EachSNMaxDistance[ID_FL]  = SN_DISTANCE_5Snr_FL;
+  63   2                              EachSNMaxDistance[ID_FR]  = SN_DISTANCE_5Snr_FR;
+  64   2                      break;
+  65   2                      case 6:
+  66   2                              SnrCfgSta._Byte  = 0x3F;
+  67   2                              EachSNMaxDistance[ID_RL]  = SN_DISTANCE_6Snr_RL;
+  68   2                              EachSNMaxDistance[ID_RML] = SN_DISTANCE_6Snr_RML;
+  69   2                              EachSNMaxDistance[ID_RMR] = SN_DISTANCE_6Snr_RMR;
+  70   2                              EachSNMaxDistance[ID_RR]  = SN_DISTANCE_6Snr_RR;
+  71   2                              EachSNMaxDistance[ID_FL]  = SN_DISTANCE_6Snr_FL;
+  72   2                              EachSNMaxDistance[ID_FR]  = SN_DISTANCE_6Snr_FR;
+  73   2                      break;
+  74   2                      default:
+  75   2                              ;
+  76   2              }
+  77   1      
+  78   1      }
+  79          
+  80          void Cmd_GetVechileMode(void)
+  81          {
+  82   1              BYTE mode_temp;
+  83   1              mode_temp = 0;
+  84   1              Cmd.wWaitTime = 190;
+  85   1      
+  86   1              CommunicationMode(COM_Uart);
+  87   1              //The delay time need to adjust
+  88   1              Delay1us(START_UART_DELAY);
+  89   1              while(Cmd.wWaitTime)
+  90   1              {
+  91   2                      if(bTimeFlag)
+  92   2                      {
+  93   3                              bTimeFlag = FALSE;
+  94   3                              Cmd.wWaitTime--;
+  95   3                              if(Cmd.wWaitTime%50 == 0)
+  96   3                              {
+  97   4                                      Cmd_SendReqVechiModetoBCM();
+  98   4                              }
+  99   3                              if(Uart0RX_OK_Flag == Rec_VechiMode)
+ 100   3                              {
+ 101   4                                      if((MsgBCM_Mode._bit.VechiMode&0xF0) == 0x20)
+ 102   4                                      {
+ 103   5                                              Cmd.bUsedSnrNUM = 2;
+ 104   5                                      }
+ 105   4                                      else if((MsgBCM_Mode._bit.VechiMode&0xF0) == 0x30)
+ 106   4                                      {
+ 107   5                                              Cmd.bUsedSnrNUM = 3;
+ 108   5                                      }
+ 109   4                                      else if((MsgBCM_Mode._bit.VechiMode&0xF0) == 0x40)
+ 110   4                                      {
+ 111   5                                              Cmd.bUsedSnrNUM = 4;
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/31/2020 09:15:06 PAGE 3   
+
+ 112   5                                      }
+ 113   4                                      else if((MsgBCM_Mode._bit.VechiMode&0xF0) == 0x50)
+ 114   4                                      {
+ 115   5                                              Cmd.bUsedSnrNUM = 5;
+ 116   5                                      }
+ 117   4                                      else if((MsgBCM_Mode._bit.VechiMode&0xF0) == 0x60)
+ 118   4                                      {
+ 119   5                                              Cmd.bUsedSnrNUM = 6;
+ 120   5                                      }
+ 121   4                                      mode_temp = MsgBCM_Mode._bit.VechiMode;
+ 122   4                                      Flash_WriteVechileMode(mode_temp);
+ 123   4                                      Cmd.wWaitTime = 0;
+ 124   4                                      break;
+ 125   4                              }
+ 126   3                      }
+ 127   2                      CLR_WDT;
+ 128   2              }
+ 129   1      
+ 130   1              if(Cmd.wWaitTime == 0)
+ 131   1              {
+ 132   2                      mode_temp = Flash_ReadVechileMode();
+ 133   2                      Cmd.bUsedSnrNUM = (mode_temp >> 4);
+ 134   2                      if(Cmd.bUsedSnrNUM < 2 || Cmd.bUsedSnrNUM > 6)
+ 135   2                      {
+ 136   3                              Cmd.bUsedSnrNUM = 6;
+ 137   3                      }
+ 138   2                      Cmd_ReleaseVechileCfgInfo(Cmd.bUsedSnrNUM);
+ 139   2              }
+ 140   1              CommunicationMode(NO_Com);
+ 141   1      }
+ 142          
+ 143          
+ 144          
+ 145          void Cmd_Process(void)
+ 146          {
+ 147   1              BYTE i,self_temp,cnt;
+ 148   1      
+ 149   1          if(bSensorCheckFlag == TRUE)
+ 150   1          {
+ 151   2              DetInfo.bDetTriggerFlag = TRUE;
+ 152   2              return;
+ 153   2          }
+ 154   1      
+ 155   1              switch(Cmd.CmdStatus)
+ 156   1                      {
+ 157   2                              case MST_DRV_SENSOR_SELFCHECK:
+ 158   2                              {
+ 159   3                                      Srl_SendData(HEAD_2000, Cmd.bID, ID_LEN_BIT, 0, 0);
+ 160   3                                      Cmd.wWaitTime = MASTER_TXANDRX_TIME_OVER_MAX_TEST;
+ 161   3                                      Cmd.CmdStatus = MST_WAIT_SELFCHECK;
+ 162   3                                      break;
+ 163   3                              }
+ 164   2                              case MST_WAIT_SELFCHECK:
+ 165   2                              {
+ 166   3                                      if(Cmd.wWaitTime > 0)
+ 167   3                                      {
+ 168   4                                              if(Serial.CmdHead_Rx == CMD_HEAD_1000) //Receive data efficacious)
+ 169   4                                              {
+ 170   5                                                      if(Serial.bValid == TRUE)
+ 171   5                                                      {
+ 172   6                                                              Serial.bValid = FALSE;
+ 173   6                                                              Cmd.bSensorErrCnt[Cmd.bID] = 0;
+ 174   6                                                              if((Serial.byData&0x07) == Cmd.bID)
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/31/2020 09:15:06 PAGE 4   
+
+ 175   6                                                              {
+ 176   7                                                                      Cmd_SaveData();
+ 177   7                                                                      Cmd_NextSensorSelf();
+ 178   7                                                              }
+ 179   6                                                      }
+ 180   5                                              }
+ 181   4                                              Cmd.wWaitTime--;
+ 182   4                                      }
+ 183   3                                      else
+ 184   3                                      {
+ 185   4                                              Cmd.CmdStatus = MST_DRV_SENSOR_SELFCHECK;
+ 186   4                                              if((++Cmd.bSensorErrCnt[Cmd.bID]) >= 3)
+ 187   4                                              {
+ 188   5                                                      Cmd.bSensorErrCnt[Cmd.bID] = 0;
+ 189   5                                                      DiagInfo.bSelfCheckResult[Cmd.bID] = 1;
+ 190   5                                                      Cmd_NextSensorSelf();
+ 191   5                                              }
+ 192   4                                      }
+ 193   3      
+ 194   3                                      break;
+ 195   3                              }
+ 196   2      
+ 197   2                              case MST_SEND_SELF_TO_BCM:
+ 198   2                              {
+ 199   3                                      self_temp = 0;
+ 200   3                                      for(i=0; i<ID_SUM; i++)
+ 201   3                                      {
+ 202   4                                              if(((SnrCfgSta._Byte>>i)&0x01) == TRUE)//sensor is config
+ 203   4                                              {
+ 204   5                                                      if(i < ID_FL)
+ 205   5                                                      {
+ 206   6                                                              if(DiagInfo.bSelfCheckResult[i] == TRUE)
+ 207   6                                                              {
+ 208   7                                                                      self_temp |= (0x01<<(3-i));
+ 209   7                                                              }
+ 210   6                                                      } else {
+ 211   6      
+ 212   6                                                              if(DiagInfo.bSelfCheckResult[i] == TRUE)
+ 213   6                                                              {
+ 214   7                                                                      self_temp |= (0x01<<(9-i));
+ 215   7                                                              }
+ 216   6                                                      }
+ 217   5                                              }
+ 218   4                                      }
+ 219   3      
+ 220   3      
+ 221   3                                      MsgRadar_Self._Byte[1] = self_temp;
+ 222   3      
+ 223   3                                      cnt = 5;
+ 224   3                                      if( (SnrCfgSta._bit.SN_RL  == TRUE && DiagInfo.bSelfCheckResult[ID_RL]  == TRUE) ||
+ 225   3                                              (SnrCfgSta._bit.SN_RML == TRUE && DiagInfo.bSelfCheckResult[ID_RML] == TRUE) ||
+ 226   3                                              (SnrCfgSta._bit.SN_RMR == TRUE && DiagInfo.bSelfCheckResult[ID_RMR] == TRUE) ||
+ 227   3                                              (SnrCfgSta._bit.SN_RR  == TRUE && DiagInfo.bSelfCheckResult[ID_RR]  == TRUE) ||
+ 228   3                                              (SnrCfgSta._bit.SN_FL  == TRUE && DiagInfo.bSelfCheckResult[ID_FL]  == TRUE) ||
+ 229   3                                              (SnrCfgSta._bit.SN_FR  == TRUE && DiagInfo.bSelfCheckResult[ID_FR]  == TRUE)   )
+ 230   3                                      {
+ 231   4                                              cnt = 25;
+ 232   4                                      }
+ 233   3                                      CommunicationMode(COM_Uart);
+ 234   3                                      for(i=0;i<cnt;i++)
+ 235   3                                      {
+ 236   4                                              Cmd_SendSelfChecktoBCM();
+ 237   4                                              Delay1ms(10);
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/31/2020 09:15:06 PAGE 5   
+
+ 238   4                                      }
+ 239   3                                      Cmd.CmdStatus = MST_DRV_SENSOR;
+ 240   3                                      Cmd.bID = ID_RL;
+ 241   3                                      CommunicationMode(COM_Internal);
+ 242   3                                      break;
+ 243   3                              }
+ 244   2      
+ 245   2                              case MST_DRV_SENSOR:
+ 246   2                              {
+ 247   3                                      Delay1ms(5);    //It is must,for after Communit with MP5,the inter communit wrong rate too high
+ 248   3                                      Srl_SendData(HEAD_800, Cmd.bID, ID_LEN_BIT, 0, 0);
+ 249   3                                      Cmd.wWaitTime = MASTER_WORK_TIME_MAX;
+ 250   3                                      Cmd.CmdStatus = MST_WAIT_SENSOR_DATA;
+ 251   3                                      break;
+ 252   3                              }
+ 253   2      
+ 254   2                              case MST_WAIT_SENSOR_DATA:
+ 255   2                              {
+ 256   3                                      if(Cmd.wWaitTime > 0)
+ 257   3                                      {
+ 258   4                                              if(Serial.CmdHead_Rx == CMD_HEAD_1000) //Receive data efficacious)
+ 259   4                                              {
+ 260   5                                                      if(Serial.bValid == TRUE)
+ 261   5                                                      {
+ 262   6                                                              Serial.bValid = FALSE;
+ 263   6                                                              if((Serial.byData&0x07) == Cmd.bID)
+ 264   6                                                              {
+ 265   7                                                                      Cmd.bSensorErrCnt[Cmd.bID] = 0;
+ 266   7                                                                      Cmd_SaveData();
+ 267   7                                                              Cmd.Debug_OKCnt[Cmd.bID]++;
+ 268   7                                                              Cmd.CmdStatus = MST_CUT_SNR;
+ 269   7                                                              }
+ 270   6                                                      }
+ 271   5                                              }
+ 272   4                                              Cmd.wWaitTime--;
+ 273   4                                      }
+ 274   3                                      else
+ 275   3                                      {
+ 276   4                                      Cmd.Debug_ErrCnt[Cmd.bID]++;
+ 277   4                                              if(++Cmd.bSensorErrCnt[Cmd.bID] >= SENSOR_EER_THRE_SENSOR)
+ 278   4                                              {
+ 279   5                                                      Cmd.bSensorErrCnt[Cmd.bID] = SENSOR_EER_THRE_SENSOR;
+ 280   5                                                      DiagInfo.bSelfCheckResult[Cmd.bID] = 1;
+ 281   5                                                      NearestData.bEachNearestDistance[Cmd.bID] = NO_OBJ;
+ 282   5                                              }
+ 283   4                                              Cmd.CmdStatus = MST_CUT_SNR;
+ 284   4                                      }
+ 285   3                                      break;
+ 286   3                              }
+ 287   2      
+ 288   2                              case MST_SEND_DISTANCE_TO_BCM:
+ 289   2                              {
+ 290   3                                      if(Cmd.wWaitTime > 100)
+ 291   3                                      {
+ 292   4                                              Cmd_UpdataDistance();
+ 293   4                                              CommunicationMode(COM_Uart);
+ 294   4                                              InitUart0ReceiveVar();
+ 295   4                                              Cmd_SendDistancetoBCM();
+ 296   4                                              Cmd.wWaitTime = 92;
+ 297   4                                      }
+ 298   3                                      else if(Cmd.wWaitTime > 0)
+ 299   3                                      {
+ 300   4      
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/31/2020 09:15:06 PAGE 6   
+
+ 301   4      #if(TEST_CODE_VEHICLE == TRUE)
+              {
+                      Uart0RX_OK_Flag = Rec_VechiInfo;
+                      MsgBCM_Info._bit.ReversGearSts = TRUE;
+              }
+              #endif
+ 307   4                                              if(Cmd_RenewVechileCfg() == TRUE)
+ 308   4                                              {
+ 309   5                                                      Cmd.CmdStatus = MST_CUT_SNR;
+ 310   5                                                      Cmd.wWaitTime = 110;
+ 311   5                                              }
+ 312   4                                              Cmd.wWaitTime--;
+ 313   4                                      }
+ 314   3                                      else
+ 315   3                                      {
+ 316   4                                              if(++Cmd.bVechInfoErrCnt > 5)
+ 317   4                                              {
+ 318   5                                                      Cmd.bVechInfoErrCnt = SENSOR_EER_THRE_CAR;
+ 319   5                                                      DetObj_InitAllChannelDistance();
+ 320   5                                                      Cmd_UpdataDistance();
+ 321   5                                                      Cmd.bID = ID_RL;
+ 322   5                                              }
+ 323   4                                              Cmd.CmdStatus = MST_SEND_DISTANCE_TO_BCM;
+ 324   4                                              Cmd.wWaitTime = 110;
+ 325   4                                      }
+ 326   3                                      break;
+ 327   3                              }
+ 328   2      
+ 329   2                              case MST_WAIT_VECHILE_CFG:  //no use
+ 330   2                              {
+ 331   3      #if(TEST_CODE_VEHICLE == TRUE)
+              {
+                      Uart0RX_OK_Flag = Rec_VechiInfo;
+                      MsgBCM_Info._bit.ReversGearSts = TRUE;
+              }
+              #endif
+ 337   3                                      if(Cmd.wWaitTime > 0)
+ 338   3                                      {
+ 339   4                                              if(Cmd_RenewVechileCfg() == TRUE)
+ 340   4                                              {
+ 341   5                                                      InitUart0ReceiveVar();
+ 342   5                                                      Cmd.CmdStatus = MST_CUT_SNR;
+ 343   5                                              }
+ 344   4                                              Cmd.wWaitTime--;
+ 345   4                                      }
+ 346   3                                      else
+ 347   3                                      {
+ 348   4                                              InitUart0ReceiveVar();
+ 349   4                                              if(++Cmd.bVechInfoErrCnt > SENSOR_EER_THRE_CAR)
+ 350   4                                              {
+ 351   5                                                      Cmd.bVechInfoErrCnt = SENSOR_EER_THRE_CAR;
+ 352   5                                                      DetObj_InitAllChannelDistance();
+ 353   5                                                      Cmd_UpdataDistance();
+ 354   5                                                      Cmd.bID = ID_RL;
+ 355   5                                                      Cmd.CmdStatus = MST_SEND_DISTANCE_TO_BCM;
+ 356   5                                              }
+ 357   4                                      }
+ 358   3                                      break;
+ 359   3                              }
+ 360   2      
+ 361   2                              case MST_CUT_SNR:
+ 362   2                              {
+ 363   3      #if(TEST_CODE_VEHICLE == TRUE)
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/31/2020 09:15:06 PAGE 7   
+
+              {
+                      Uart0RX_OK_Flag = Rec_VechiInfo;
+                      MsgBCM_Info._bit.ReversGearSts = TRUE;
+              }
+              #endif
+ 369   3                                      Cmd_NextSensorDet();
+ 370   3      
+ 371   3                                      break;
+ 372   3                              }
+ 373   2      
+ 374   2                              case SLV_WAIT_CMD:
+ 375   2                              {
+ 376   3                                      if(Serial.CmdHead_Rx == CMD_HEAD_800)   //work command head
+ 377   3                                      {
+ 378   4                                              if(Serial.bValid == TRUE)
+ 379   4                                              {
+ 380   5                                                      Serial.bValid = FALSE;
+ 381   5                                                      if((Serial.byData&0x07) == DetInfo.bID)
+ 382   5                                                      {
+ 383   6                                                              Cmd.wWaitTime = SINGLE_SENSOR_TIME_OVER_MAX;
+ 384   6                                                              DetInfo.bDetTriggerFlag = TRUE;
+ 385   6                                                              CommunicationMode(NO_Com);
+ 386   6                                                              Cmd.CmdStatus = SLV_DISTANCE_BACK;
+ 387   6                                                      }
+ 388   5                                              }
+ 389   4                                      }
+ 390   3      
+ 391   3                                      if(Serial.CmdHead_Rx == CMD_HEAD_1500)  //Work frock command head
+ 392   3                                      {
+ 393   4                                              if(Serial.bValid == TRUE)
+ 394   4                                              {
+ 395   5                                                      Serial.bValid = FALSE;
+ 396   5                                                      CommunicationMode(COM_Internal);
+ 397   5                                                      Cmd.CmdStatus = SLV_CALIBRATION;
+ 398   5                                              }
+ 399   4                                      }
+ 400   3      
+ 401   3                                      if(Serial.CmdHead_Rx == CMD_HEAD_2000)    //Self check command head
+ 402   3                                      {
+ 403   4                                              if(Serial.bValid == TRUE)
+ 404   4                                              {
+ 405   5                                                      Serial.bValid = FALSE;
+ 406   5                                                      if((Serial.byData&0x07) == DetInfo.bID)
+ 407   5                                                      {
+ 408   6                                                              Cmd.wWaitTime = SINGLE_SENSOR_TIME_OVER_MAX;
+ 409   6                                                              DetInfo.bDetTriggerFlag = FALSE;
+ 410   6                                                              CommunicationMode(COM_Internal);
+ 411   6                                                              Cmd.CmdStatus = SLV_DISTANCE_BACK;
+ 412   6                                                      }
+ 413   5                                              }
+ 414   4                                      }
+ 415   3      
+ 416   3                                      break;
+ 417   3                              }
+ 418   2      
+ 419   2                              case SLV_DISTANCE_BACK:
+ 420   2                              {
+ 421   3      #if(TEST_CODE_DETDATA == TRUE)
+              {
+                      NearestData.bNearestDistance          = 0x20;
+                      DiagInfo.bSelfCheckResult[DetInfo.bID] = 0;             //0-OK,1-NG
+                      DiagInfo.bKeepFlag                     = 0;
+              }
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/31/2020 09:15:06 PAGE 8   
+
+              #endif
+ 428   3      
+ 429   3                                      Cmd.wBackData =(((WORD)NearestData.bNearestDistance)|
+ 430   3                                                              ((WORD)DiagInfo.bSelfCheckResult[DetInfo.bID]<<8)|
+ 431   3                                                                      ((WORD)DiagInfo.bKeepFlag<<9));
+ 432   3                                      Srl_SendData(HEAD_1000, DetInfo.bID, ID_LEN_BIT, Cmd.wBackData, 10);
+ 433   3                                      CommunicationMode(COM_Internal);
+ 434   3                                      Cmd.CmdStatus = SLV_WAIT_CMD;
+ 435   3                                      break;
+ 436   3                              }
+ 437   2      
+ 438   2                              case SLV_CALIBRATION:
+ 439   2                              {
+ 440   3                                      if(Serial.CmdHead_Rx == CMD_HEAD_1500)
+ 441   3                                      {
+ 442   4                                              if(Serial.bValid == TRUE)
+ 443   4                                              {
+ 444   5                                                      Serial.bValid = FALSE;
+ 445   5                                                      Cmd.CmdCalibration = (Serial.byData&0xF);
+ 446   5                                                      DetInfo.bDetTriggerFlag = TRUE;
+ 447   5                                                      Stop_PCA0_Capture(0);           //DATA
+ 448   5                                                      Cmd.CmdStatus = SLV_CALIBRATION_BACK;
+ 449   5                                              }
+ 450   4                                      }
+ 451   3                                      break;
+ 452   3                              }
+ 453   2      
+ 454   2                              case SLV_CALIBRATION_BACK:
+ 455   2                              {
+ 456   3                                      switch(Cmd.CmdCalibration)
+ 457   3                                      {
+ 458   4                                              case CMD_REQUEST_DISTANCE :     Cmd.wBackData = ClrtData.bDistance;             break;
+ 459   4                                              case CMD_REQUEST_RINGTIME :             Cmd.wBackData = (ClrtData.wRingTime/10);                break;
+ 460   4                                              case CMD_REQUEST_ECHO_WIDTH     :       Cmd.wBackData = ClrtData.wTimeWidth;    break;
+ 461   4                                              case CMD_REQUEST_ECHO_VOL :             Cmd.wBackData = ClrtData.bVolHeight;    break;
+ 462   4                                              case CMD_REQUEST_SOFTWARE_VERSION :             Cmd.wBackData = 0x01;                   break;
+ 463   4                                              case CMD_REQUEST_HARDWARE_VERSION :             Cmd.wBackData = 0x01;                   break;
+ 464   4                                              case CMD_REQUEST_ID                :
+ 465   4                                                      Cmd.wBackData = DetInfo.bID;
+ 466   4                                                      break;
+ 467   4                                              default:
+ 468   4                                                      Cmd.wBackData = 0x00;
+ 469   4                                      }
+ 470   3                                      Srl_SendData(HEAD_1500, Cmd.CmdCalibration, TEST_CMD_LEN_BIT, Cmd.wBackData, 8);
+ 471   3                                      Start_PCA0_Capture(0);          //DATA
+ 472   3                                      Cmd.CmdStatus = SLV_CALIBRATION;
+ 473   3                                      break;
+ 474   3                              }
+ 475   2      
+ 476   2                              case DEBUG_MODE:
+ 477   2                              {
+ 478   3      #if(TEST_CODE_VEHICLE == TRUE)
+              {
+                      Uart0RX_OK_Flag = Rec_VechiInfo;
+                      MsgBCM_Info._bit.ReversGearSts = TRUE;
+              }
+              #endif
+ 484   3                                      if(Cmd.wWaitTime > 0)
+ 485   3                                      {
+ 486   4                                              if(Cmd_RenewVechileCfg() == TRUE)
+ 487   4                                              {
+ 488   5                                                      Cmd.CmdStatus = DEBUG_MODE;
+ 489   5                                                      Cmd.wWaitTime = 1;
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/31/2020 09:15:06 PAGE 9   
+
+ 490   5                                              }
+ 491   4                                              Cmd.wWaitTime--;
+ 492   4                                      }
+ 493   3                                      else
+ 494   3                                      {
+ 495   4                                              DetObj_InitAllChannelDistance();
+ 496   4                                              Cmd_UpdataDistance();
+ 497   4                                              CommunicationMode(COM_Uart);
+ 498   4                                              Cmd_SendDistancetoBCM();
+ 499   4                                              Cmd.wWaitTime = SENSOR_STOP_SCAN_TIME;
+ 500   4                                      }
+ 501   3                                      break;
+ 502   3                              }
+ 503   2      
+ 504   2      
+ 505   2                              default:
+ 506   2                              ;
+ 507   2                      }
+ 508   1      
+ 509   1      
+ 510   1      
+ 511   1      
+ 512   1      }
+ 513          
+ 514          void Cmd_SaveData(void)
+ 515          {
+ 516   1              if(Cmd.bID != ID_MASTER)
+ 517   1              {
+ 518   2                      if(((Serial.byData >> 11) & 0x01) == 0x00) //The self-test data are normal; 1 is error
+ 519   2                      {
+ 520   3                              //if(((Serial.byData >> 12) & 0x01) == 0x00) //Determine whether the sensor keep or not; 1 is keep
+ 521   3                              DiagInfo.bSelfCheckResult[Cmd.bID] = 0;
+ 522   3                              NearestData.bEachNearestDistance[Cmd.bID] = (BYTE)(Serial.byData >> 3);
+ 523   3                      }
+ 524   2                      else
+ 525   2                      {
+ 526   3                              DiagInfo.bSelfCheckResult[Cmd.bID] = 0;
+ 527   3                              NearestData.bEachNearestDistance[Cmd.bID] = 0xFF;
+ 528   3                      }
+ 529   2              }
+ 530   1              Serial.byData = (WORD)0x0000;
+ 531   1      }
+ 532          
+ 533          void Cmd_UpdataDistance(void)
+ 534          {
+ 535   1              Cmd_DistancetoComInfo();
+ 536   1      
+ 537   1              MsgRadar_Distance._bit.RPADetectionRL  = Cmd.bDistance[ID_RL];
+ 538   1              MsgRadar_Distance._bit.RPADetectionRML = Cmd.bDistance[ID_RML];
+ 539   1              MsgRadar_Distance._bit.RPADetectionRMR = Cmd.bDistance[ID_RMR];
+ 540   1              MsgRadar_Distance._bit.RPADetectionRR  = Cmd.bDistance[ID_RR];
+ 541   1              MsgRadar_Distance._bit.RPADetectionFL  = Cmd.bDistance[ID_FL];
+ 542   1              MsgRadar_Distance._bit.RPADetectionFR  = Cmd.bDistance[ID_FR];
+ 543   1      
+ 544   1              MsgRadar_Distance._bit.ObsorientRL  = Cmd.bObsorient[ID_RL];
+ 545   1              MsgRadar_Distance._bit.ObsorientRML = Cmd.bObsorient[ID_RML];
+ 546   1              MsgRadar_Distance._bit.ObsorientRMR = Cmd.bObsorient[ID_RMR];
+ 547   1              MsgRadar_Distance._bit.ObsorientRR  = Cmd.bObsorient[ID_RR];
+ 548   1              MsgRadar_Distance._bit.ObsorientFL  = Cmd.bObsorient[ID_FL];
+ 549   1              MsgRadar_Distance._bit.ObsorientFR  = Cmd.bObsorient[ID_FR];
+ 550   1              MsgRadar_Distance._bit.Reserve = 0x00;
+ 551   1      
+ 552   1              MsgRadar_Distance._bit.RPASpeakerInfo = Cmd.bBuzzerInfo;
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/31/2020 09:15:06 PAGE 10  
+
+ 553   1      }
+ 554          
+ 555          void Cmd_DistancetoComInfo(void)
+ 556          {
+ 557   1              BYTE i;
+ 558   1              BYTE NearestDis;
+ 559   1              NearestDis = 0xFF;
+ 560   1      
+ 561   1              for(i=0;i<ID_SUM;i++)                                   //distance value cale to command data
+ 562   1              {
+ 563   2                      if(NearestData.bEachNearestDistance[i] > EachSNMaxDistance[i])
+ 564   2                      {
+ 565   3                              NearestData.bEachNearestDistance[i] = 0xFF;
+ 566   3                      }
+ 567   2                      if(NearestDis > NearestData.bEachNearestDistance[i])
+ 568   2                      {
+ 569   3                              NearestDis = NearestData.bEachNearestDistance[i];
+ 570   3                      }
+ 571   2      
+ 572   2                      if((NearestData.bEachNearestDistance[i] < 30) &&
+ 573   2                         (NearestData.bEachNearestDistance[i] > 0) )
+ 574   2                      {
+ 575   3                              Cmd.bDistance[i] = 1;
+ 576   3                      }
+ 577   2                      else if(NearestData.bEachNearestDistance[i]<MAX_DETECT_DISTANCE)
+ 578   2                      {
+ 579   3                              Cmd.bDistance[i] = (NearestData.bEachNearestDistance[i]-20)/10;
+ 580   3                      }
+ 581   2                      else if(NearestData.bEachNearestDistance[i] == MAX_DETECT_DISTANCE)
+ 582   2                      {
+ 583   3                              Cmd.bDistance[i] = 0x0C;
+ 584   3                      }
+ 585   2                      else
+ 586   2                      {
+ 587   3                              Cmd.bDistance[i] = 0;
+ 588   3                      }
+ 589   2      
+ 590   2                      if(Cmd.bDistance[i] == 0)               //set the orient
+ 591   2                      {
+ 592   3                              Cmd.bObsorient[i] = 0;
+ 593   3                      }
+ 594   2                      else
+ 595   2                      {
+ 596   3                              Cmd.bObsorient[i] = 1;
+ 597   3                      }
+ 598   2      
+ 599   2              }
+ 600   1      
+ 601   1              if(NearestDis > MAX_DETECT_DISTANCE)                    //renew the buzzer information
+ 602   1              {
+ 603   2                      Cmd.bBuzzerInfo = 0;
+ 604   2              }
+ 605   1              else if(NearestDis >= MID_DETECT_DISTANCE)
+ 606   1              {
+ 607   2                      Cmd.bBuzzerInfo = 2;
+ 608   2              }
+ 609   1              else if(NearestDis >= CONTINUOUS_CHIME_DISTANCE)
+ 610   1              {
+ 611   2                      Cmd.bBuzzerInfo = 4;
+ 612   2              }
+ 613   1              else if(NearestDis >= 0)
+ 614   1              {
+ 615   2                      Cmd.bBuzzerInfo = 7;
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/31/2020 09:15:06 PAGE 11  
+
+ 616   2              }
+ 617   1      }
+ 618          
+ 619          void Cmd_NextSensorSelf(void)
+ 620          {
+ 621   1          Cmd.CmdStatus = MST_DRV_SENSOR_SELFCHECK;
+ 622   1      
+ 623   1              for( ; Cmd.bID<ID_SUM; )
+ 624   1              {
+ 625   2                      Cmd.bID++;
+ 626   2                      if(Cmd.bID == ID_MASTER)Cmd.bID++;
+ 627   2      
+ 628   2                      if(((SnrCfgSta._Byte>>Cmd.bID) & 0x01) == TRUE)
+ 629   2                      {
+ 630   3                              break;
+ 631   3                      }
+ 632   2              }
+ 633   1      
+ 634   1          if(Cmd.bID >= ID_SUM)
+ 635   1          {
+ 636   2              Cmd.bID = ID_RL;
+ 637   2              Cmd.CmdStatus = MST_SEND_SELF_TO_BCM;
+ 638   2          }
+ 639   1      }
+ 640          
+ 641          void Cmd_NextSensorDet(void)
+ 642          {
+ 643   1              static BYTE SendToBcmFlag = FALSE;
+ 644   1      
+ 645   1              //TEST
+ 646   1      /*      Cmd.bSensorRun[0] = TRUE;
+ 647   1              Cmd.bSensorRun[1] = TRUE;
+ 648   1              Cmd.bSensorRun[2] = TRUE;
+ 649   1              Cmd.bSensorRun[3] = TRUE;
+ 650   1              Cmd.bSensorRun[4] = TRUE;
+ 651   1              Cmd.bSensorRun[5] = TRUE;*/
+ 652   1      
+ 653   1      
+ 654   1              if((SendToBcmFlag == FALSE )&&
+ 655   1                 ((Cmd.bID == ID_RR) || (Cmd.bID == ID_FR)))
+ 656   1              //if(0)
+ 657   1              {
+ 658   2                      SendToBcmFlag = TRUE;
+ 659   2                      Cmd.wWaitTime = 110;
+ 660   2                      CommunicationMode(COM_Uart);
+ 661   2                      Cmd.CmdStatus = MST_SEND_DISTANCE_TO_BCM;
+ 662   2              }
+ 663   1              else
+ 664   1              {
+ 665   2                      SendToBcmFlag = FALSE;
+ 666   2                      Cmd.bID = (Cmd.bID+1)%ID_SUM;
+ 667   2                      if(Cmd.bSensorRun[Cmd.bID] == TRUE)
+ 668   2                      {
+ 669   3                              if(Cmd.bID == ID_MASTER)//RML
+ 670   3                              {
+ 671   4                                      DetInfo.bDetTriggerFlag = TRUE;
+ 672   4                              }
+ 673   3                              else{
+ 674   4                                      CommunicationMode(COM_Internal);
+ 675   4                                      Cmd.CmdStatus = MST_DRV_SENSOR;
+ 676   4                              }
+ 677   3                      }
+ 678   2              }
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/31/2020 09:15:06 PAGE 12  
+
+ 679   1      }
+ 680          
+ 681          void Cmd_ClearBuffer(void)
+ 682          {
+ 683   1          BYTE i;
+ 684   1          for(i=0; i<SN_NUM; i++)
+ 685   1          {
+ 686   2                NearestData.bEachNearestDistance[i] = 0xFF;
+ 687   2          }
+ 688   1      }
+ 689          
+ 690          void Cmd_SendReqVechiModetoBCM(void)
+ 691          {
+ 692   1              BYTE i;
+ 693   1      
+ 694   1              UART0_ModeDataL();
+ 695   1              UART0_INTRX_Dis();
+ 696   1              Delay1us(START_UART_DELAY);
+ 697   1      
+ 698   1              for(i=0;i<5;i++)
+ 699   1              {
+ 700   2                      UART0_WriteByte(MsgRadar_ReqMode._Word[i]);
+ 701   2              }
+ 702   1              Delay1us(END_UART_DELAY);
+ 703   1              UART0_INTRX_En();
+ 704   1              UART0_ModeDataH();
+ 705   1      }
+ 706          
+ 707          void Cmd_SendSelfChecktoBCM(void)
+ 708          {
+ 709   1      
+ 710   1              BYTE i,eve_temp;
+ 711   1          WORD checksum_temp;
+ 712   1      
+ 713   1          checksum_temp = CalcFrameChecksum(UART0_FRM_SENDSELF);
+ 714   1          MsgRadar_Self._Byte[3] = checksum_temp;
+ 715   1              for(i=0;i<4;i++)
+ 716   1              {
+ 717   2                      eve_temp = CalcByteEVEN(MsgRadar_Self._Byte[i]);
+ 718   2                      MsgRadar_Self._Byte[i] |= (WORD)((eve_temp & 0x01) << 8);
+ 719   2              }
+ 720   1      
+ 721   1              UART0_ModeDataL();
+ 722   1              UART0_INTRX_Dis();
+ 723   1              Delay1us(START_UART_DELAY);
+ 724   1      
+ 725   1          for(i=0;i<5;i++)
+ 726   1          {
+ 727   2              UART0_WriteByte(MsgRadar_Self._Byte[i]);
+ 728   2          }
+ 729   1      
+ 730   1          Delay1us(END_UART_DELAY);
+ 731   1              UART0_ModeDataH();
+ 732   1      }
+ 733          
+ 734          void Cmd_SendDistancetoBCM(void)
+ 735          {
+ 736   1              BYTE i,eve_temp;
+ 737   1          WORD checksum_temp;
+ 738   1      
+ 739   1          checksum_temp = CalcFrameChecksum(UART0_FRM_DISTANCE);
+ 740   1          MsgRadar_Distance._Byte[7] = checksum_temp;
+ 741   1              for(i=0;i<8;i++)
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/31/2020 09:15:06 PAGE 13  
+
+ 742   1              {
+ 743   2                      MsgRadar_Distance._Byte[i] &= 0x00FF;
+ 744   2                      eve_temp = CalcByteEVEN(MsgRadar_Distance._Byte[i]);
+ 745   2                      MsgRadar_Distance._Byte[i] |= (WORD)((eve_temp & 0x01) << 8);
+ 746   2              }
+ 747   1      
+ 748   1              Uart0TX_ALL_Flag = FALSE;
+ 749   1              UART0_ModeDataL();
+ 750   1              UART0_INTRX_Dis();
+ 751   1              //The delay time need to adjust
+ 752   1              Delay1us(START_UART_DELAY);
+ 753   1          for(i=0;i<9;i++)
+ 754   1          {
+ 755   2              UART0_WriteByte(MsgRadar_Distance._Byte[i]);
+ 756   2          }
+ 757   1          Delay1us(END_UART_DELAY);
+ 758   1              UART0_INTRX_En();
+ 759   1              UART0_ModeDataH();
+ 760   1      
+ 761   1      
+ 762   1      }
+ 763          
+ 764          BYTE Cmd_VechileCfgCheck(void)
+ 765          {
+ 766   1      
+ 767   1      
+ 768   1              return FALSE;
+ 769   1      }
+ 770          
+ 771          
+ 772          BYTE Cmd_RenewVechileCfg(void)
+ 773          {
+ 774   1              /* test */
+ 775   1              //Uart0RX_OK_Flag = Rec_VechiInfo;
+ 776   1              //MsgBCM_Info._bit.ReversGearSts = TRUE;
+ 777   1      
+ 778   1              if(Uart0RX_OK_Flag == Rec_VechiInfo)
+ 779   1              {
+ 780   2                      Cmd.bVechInfoErrCnt = 0;
+ 781   2                      Uart0RX_OK_Flag = Rec_ERR;
+ 782   2      
+ 783   2                      if(MsgBCM_Info._bit.ReversGearSts == TRUE)
+ 784   2                      {
+ 785   3                              if(SnrCfgSta._bit.SN_RL  == TRUE)       Cmd.bSensorRun[ID_RL]   = TRUE;
+ 786   3                              if(SnrCfgSta._bit.SN_RML == TRUE)       Cmd.bSensorRun[ID_RML]  = TRUE;
+ 787   3                              if(SnrCfgSta._bit.SN_RMR == TRUE)       Cmd.bSensorRun[ID_RMR]  = TRUE;
+ 788   3                              if(SnrCfgSta._bit.SN_RR  == TRUE)       Cmd.bSensorRun[ID_RR]   = TRUE;
+ 789   3                              if(SnrCfgSta._bit.SN_FL  == TRUE)       Cmd.bSensorRun[ID_FL]   = TRUE;
+ 790   3                              if(SnrCfgSta._bit.SN_FR  == TRUE)       Cmd.bSensorRun[ID_FR]   = TRUE;
+ 791   3                              return TRUE;
+ 792   3                      }
+ 793   2                      else if(MsgBCM_Info._bit.ParkingGearSts == TRUE)
+ 794   2                      {
+ 795   3                              Cmd.bSensorRun[ID_RL]   = FALSE;
+ 796   3                              Cmd.bSensorRun[ID_RML]  = FALSE;
+ 797   3                              Cmd.bSensorRun[ID_RMR]  = FALSE;
+ 798   3                              Cmd.bSensorRun[ID_RR]   = FALSE;
+ 799   3                              Cmd.bSensorRun[ID_FL]   = FALSE;
+ 800   3                              Cmd.bSensorRun[ID_FR]   = FALSE;
+ 801   3      
+ 802   3                              NearestData.bEachNearestDistance[ID_RL]   = 0XFF;
+ 803   3                              NearestData.bEachNearestDistance[ID_RML]  = 0XFF;
+ 804   3                              NearestData.bEachNearestDistance[ID_RMR]  = 0XFF;
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/31/2020 09:15:06 PAGE 14  
+
+ 805   3                              NearestData.bEachNearestDistance[ID_RR]   = 0XFF;
+ 806   3                              NearestData.bEachNearestDistance[ID_FL]   = 0XFF;
+ 807   3                              NearestData.bEachNearestDistance[ID_FR]   = 0XFF;
+ 808   3      
+ 809   3                      }
+ 810   2                      else if((MsgBCM_Info._bit.FrontSwitchSts == TRUE) &&
+ 811   2                                      (MsgBCM_Info._bit.VehicleSpeed   == FALSE) &&
+ 812   2                                      (Cmd.bUsedSnrNUM == 5 || Cmd.bUsedSnrNUM == 6))
+ 813   2                      {
+ 814   3                              if(SnrCfgSta._bit.SN_RL  == TRUE)       Cmd.bSensorRun[ID_RL]   = TRUE;
+ 815   3                              if(SnrCfgSta._bit.SN_RML == TRUE)       Cmd.bSensorRun[ID_RML]  = TRUE;
+ 816   3                              if(SnrCfgSta._bit.SN_RMR == TRUE)       Cmd.bSensorRun[ID_RMR]  = TRUE;
+ 817   3                              if(SnrCfgSta._bit.SN_RR  == TRUE)       Cmd.bSensorRun[ID_RR]   = TRUE;
+ 818   3                              if(SnrCfgSta._bit.SN_FL  == TRUE)       Cmd.bSensorRun[ID_FL]   = TRUE;
+ 819   3                              if(SnrCfgSta._bit.SN_FR  == TRUE)       Cmd.bSensorRun[ID_FR]   = TRUE;
+ 820   3                              return TRUE;
+ 821   3      
+ 822   3                      }
+ 823   2                      else
+ 824   2                      {
+ 825   3                              Cmd.bSensorRun[ID_RL]   = FALSE;
+ 826   3                              Cmd.bSensorRun[ID_RML]  = FALSE;
+ 827   3                              Cmd.bSensorRun[ID_RMR]  = FALSE;
+ 828   3                              Cmd.bSensorRun[ID_RR]   = FALSE;
+ 829   3                              Cmd.bSensorRun[ID_FL]   = FALSE;
+ 830   3                              Cmd.bSensorRun[ID_FR]   = FALSE;
+ 831   3      
+ 832   3                              NearestData.bEachNearestDistance[ID_RL]   = 0XFF;
+ 833   3                              NearestData.bEachNearestDistance[ID_RML]  = 0XFF;
+ 834   3                              NearestData.bEachNearestDistance[ID_RMR]  = 0XFF;
+ 835   3                              NearestData.bEachNearestDistance[ID_RR]   = 0XFF;
+ 836   3                              NearestData.bEachNearestDistance[ID_FL]   = 0XFF;
+ 837   3                              NearestData.bEachNearestDistance[ID_FR]   = 0XFF;
+ 838   3                      }
+ 839   2              }
+ 840   1              return FALSE;
+ 841   1      
+ 842   1      }
+ 843          
+ 844          
+ 845          
+ 846          
+ 847          
+ 848          
+ 849          
+ 850          
+ 851          
+ 852          
+ 853          
+ 854          
+ 855          
+ 856          
+ 857          
+ 858          
+ 859          
+ 860          
+ 861          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   3843    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     90       8
+C51 COMPILER V9.60.0.0   COMMAND                                                           08/31/2020 09:15:06 PAGE 15  
+
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

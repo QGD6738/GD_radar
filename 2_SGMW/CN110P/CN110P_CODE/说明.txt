@@ -1,0 +1,5 @@
+20180912  V1.0 F507
+20190422
+      1. 移植于D50的ST程序，修改了                   
+	 if(AnsData.bObsSigVolHeight > (DETECT_NOISE_BASE_VOL<<1) 
+                    && AnsData.wObsSigTimeWidth > DETECT_NOISE_WIDTH )的bug;

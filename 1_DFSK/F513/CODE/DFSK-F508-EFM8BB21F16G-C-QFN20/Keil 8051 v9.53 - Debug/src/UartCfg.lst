@@ -1,0 +1,240 @@
+C51 COMPILER V9.60.0.0   UARTCFG                                                           08/31/2020 09:15:07 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE UARTCFG
+OBJECT MODULE PLACED IN .\src\UartCfg.OBJ
+COMPILER INVOKED BY: c:\SiliconLabs\SimplicityStudio\v4\developer\toolchains\keil_8051\9.60\BIN\C51.exe C:\WorkSpace\1_D
+                    -FSK\F508\CODE\DFSK-F508-EFM8BB21F16G-C-QFN20\src\UartCfg.c OMF2 LARGE DEBUG OBJECTEXTEND ROM(LARGE) WARNINGLEVEL(2) FLOA
+                    -TFUZZY(3) OPTIMIZE(8,SPEED) DEFINE(DEBUG=1) INTVECTOR(0X0000) INTPROMOTE INCDIR(C:\WorkSpace\1_DFSK\F508\CODE\DFSK-F508-
+                    -EFM8BB21F16G-C-QFN20\inc;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/shared/si8051base;C:/Sili
+                    -conLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/EFM8BB2/inc) PRINT(.\src\UartCfg.lst) COND PAGEWIDTH(120)
+                    - PAGELENGTH(65) OBJECT(.\src\UartCfg.OBJ)
+
+line level    source
+
+   1          /*********************************************************************************************************
+             -************
+   2          ** FILE NAME: UartCfg.c
+   3          **
+   4          ** PROJECT:  DFSK_F508_RADAR
+   5          ** CPU:      EFM8BB21F16G
+   6          ** COMPILER: SILICON
+   7          ** -------------------------------------------------------------------------------------------------------
+             -------------
+   8          ** VERSION:  V0.1
+   9          ** DATE:     2020.08.06
+  10          **********************************************************************************************************
+             -***********/
+  11          #include "SI_EFM8BB2_DEFS.h"
+  12          #include "Uart.h"
+  13          #include "UartCfg.h"
+  14          #include "Command.h"
+  15          #include "Cpu.h"
+  16          #include "Timer.h"
+  17          
+  18          BCM_Mode_buff       xdata  MsgBCM_Mode;
+  19          BCM_Info_buff       xdata  MsgBCM_Info;
+  20          RPAS_ReqMode_buff   xdata  MsgRadar_ReqMode;
+  21          RPAS_Self_buff      xdata  MsgRadar_Self;
+  22          RPAS_Distance_buff  xdata  MsgRadar_Distance;
+  23          
+  24          //stUart0_FrameInfoType Uart0_FrameInfoType;
+  25          
+  26          const WORD       xdata  MsgBCM_Mode_Init[4] =   \
+  27                          {0x0000,0x0000,0x0000,0x0000};
+  28          const WORD       xdata  MsgBCM_Info_Init[4] =   \
+  29                          {0x0000,0x0004,0x0000,0x0000};
+  30          const WORD   xdata  MsgRadar_ReqMode_Init[4] =  \
+  31                  {0x00AA,0x000A,0x00AF,0x0063};
+  32          const WORD      xdata  MsgRadar_Self_Init[4] =  \
+  33                  {0x00BB,0x00FF,0x00BF,0x0000};
+  34          const WORD  xdata  MsgRadar_Distance_Init[8] =  \
+  35          //              {0x00CC,0x0000,0x0000,0x0000,0x0000,0x0000,0x00CF,0x019B};
+  36                  {0x00CC,0x00FF,0x00FF,0x00FF,0x00FF,0x00FF,0x00CF,0x00FF};
+  37          
+  38          void   UART0_DataInit(void)
+  39          {
+  40   1              BYTE i;
+  41   1              for(i=0;i<4;i++)
+  42   1              {
+  43   2                      MsgBCM_Mode._Byte[i] = MsgBCM_Mode_Init[i];
+  44   2                      MsgBCM_Info._Byte[i] = MsgBCM_Info_Init[i];
+  45   2                      MsgRadar_ReqMode._Word[i] = MsgRadar_ReqMode_Init[i];
+  46   2                      MsgRadar_Self._Byte[i] = MsgRadar_Self_Init[i];
+  47   2              }
+  48   1      
+C51 COMPILER V9.60.0.0   UARTCFG                                                           08/31/2020 09:15:07 PAGE 2   
+
+  49   1              for(i=0;i<8;i++)
+  50   1              {
+  51   2                      MsgRadar_Distance._Byte[i] = MsgRadar_Distance_Init[i];
+  52   2              }
+  53   1      }
+  54          
+  55          
+  56          BYTE   CalcByteEVEN(BYTE value)
+  57          {
+  58   1         BYTE i,evensum,ret;
+  59   1         evensum = 0;
+  60   1         ret = 0;
+  61   1         for(i=0;i<8;i++)
+  62   1         {
+  63   2                 if(BIT_SHIFLEFT(value,i) == 0x01)
+  64   2                 {
+  65   3                         evensum++;
+  66   3                 }
+  67   2         }
+  68   1         ret = evensum%2;
+  69   1         return ret;
+  70   1      }
+  71          
+  72          BYTE   CalcFrameChecksum(E_Uart0_FrameType mode)
+  73          {
+  74   1              BYTE i,ret;
+  75   1              WORD checksum;
+  76   1              checksum = 0x0000;
+  77   1              ret = 0;
+  78   1              switch (mode)
+  79   1              {
+  80   2                      case UART0_FRM_DISTANCE:
+  81   2                      {
+  82   3                              for(i=0;i<7;i++)
+  83   3                              {
+  84   4                                      checksum += (BYTE)(MsgRadar_Distance._Byte[i] & (WORD)0x00FF);
+  85   4                              }
+  86   3                              checksum = checksum % 256;
+  87   3                              break;
+  88   3                      }
+  89   2                      case UART0_FRM_REQMODE:
+  90   2                      {
+  91   3                              for(i=0;i<3;i++)
+  92   3                              {
+  93   4                                      checksum += (BYTE)(MsgRadar_ReqMode._Word[i] & (WORD)0x00FF);
+  94   4                              }
+  95   3                              checksum = checksum % 256;
+  96   3                              break;
+  97   3                      }
+  98   2                      case UART0_FRM_VECHMOD:
+  99   2                      {
+ 100   3                              for(i=0;i<3;i++)
+ 101   3                              {
+ 102   4                                      checksum += (BYTE)(MsgBCM_Mode._Byte[i] & (WORD)0x00FF);
+ 103   4                              }
+ 104   3                              checksum = checksum % 256;
+ 105   3                              break;
+ 106   3                      }
+ 107   2      
+ 108   2                      case UART0_FRM_SENDSELF:
+ 109   2                      {
+ 110   3                              for(i=0;i<3;i++)
+ 111   3                              {
+C51 COMPILER V9.60.0.0   UARTCFG                                                           08/31/2020 09:15:07 PAGE 3   
+
+ 112   4                                      checksum += (BYTE)(MsgRadar_Self._Byte[i] & (WORD)0x00FF);
+ 113   4                              }
+ 114   3                              checksum = checksum % 256;
+ 115   3                              break;
+ 116   3                      }
+ 117   2      
+ 118   2                      case UART0_FRM_VECHINFO:
+ 119   2                      {
+ 120   3                              for(i=0;i<3;i++)
+ 121   3                              {
+ 122   4                                      checksum += (BYTE)(MsgBCM_Info._Byte[i] & (WORD)0x00FF);
+ 123   4                              }
+ 124   3                              checksum = checksum % 256;
+ 125   3                              break;
+ 126   3                      }
+ 127   2              }
+ 128   1              ret = checksum;
+ 129   1              return ret;
+ 130   1      }
+ 131          
+ 132          void   ReceiveFramereCorresponding(WORD start)
+ 133          {
+ 134   1              Uart0_ReceiveInfoType* pCtt;
+ 135   1          pCtt = &gUart0ReceivePduInfo;
+ 136   1      
+ 137   1              if(start == 0xAA)
+ 138   1              {
+ 139   2                      MsgBCM_Mode._bit.Header         = (BYTE)(pCtt->ReceiveBuff[0]);
+ 140   2                      MsgBCM_Mode._bit.Header_EVEN    = ((pCtt->ReceiveBuff[0] >> 8)&0x01);
+ 141   2                      MsgBCM_Mode._bit.VechiMode      = (BYTE)(pCtt->ReceiveBuff[1]);
+ 142   2                      MsgBCM_Mode._bit.VechiMode_EVEN = ((pCtt->ReceiveBuff[1] >> 8)&0x01);
+ 143   2                      MsgBCM_Mode._bit.Tail           = (BYTE)(pCtt->ReceiveBuff[2]);
+ 144   2                      MsgBCM_Mode._bit.Tail_EVEN      = ((pCtt->ReceiveBuff[2] >> 8)&0x01);
+ 145   2                      MsgBCM_Mode._bit.Checksum       = (BYTE)(pCtt->ReceiveBuff[3]);
+ 146   2                      MsgBCM_Mode._bit.Checksum_EVEN  = ((pCtt->ReceiveBuff[3] >> 8)&0x01);
+ 147   2              }
+ 148   1              else if(start == 0xCC)
+ 149   1              {
+ 150   2                      MsgBCM_Info._bit.Header           = (BYTE)(pCtt->ReceiveBuff[0]);
+ 151   2                      MsgBCM_Info._bit.Header_EVEN      = ((pCtt->ReceiveBuff[0] >> 8)&0x01);
+ 152   2                      MsgBCM_Info._bit.VehicleSpeed     = ((pCtt->ReceiveBuff[1])&0x01);
+ 153   2                      MsgBCM_Info._bit.ReversGearSts    = ((pCtt->ReceiveBuff[1] >> 1)&0x01);
+ 154   2                      MsgBCM_Info._bit.ParkingGearSts   = ((pCtt->ReceiveBuff[1] >> 2)&0x01);
+ 155   2                      MsgBCM_Info._bit.FrontSwitchSts   = ((pCtt->ReceiveBuff[1] >> 3)&0x01);
+ 156   2                      MsgBCM_Info._bit.VechileInfo_EVEN = ((pCtt->ReceiveBuff[1] >> 8)&0x01);
+ 157   2                      MsgBCM_Info._bit.Tail             = (BYTE)(pCtt->ReceiveBuff[2]);
+ 158   2                      MsgBCM_Info._bit.Tail_EVEN        = ((pCtt->ReceiveBuff[2] >> 8)&0x01);
+ 159   2                      MsgBCM_Info._bit.Checksum         = (BYTE)(pCtt->ReceiveBuff[3]);
+ 160   2                      MsgBCM_Info._bit.Checksum_EVEN    = ((pCtt->ReceiveBuff[3] >> 8)&0x01);
+ 161   2              }
+ 162   1              else
+ 163   1              {
+ 164   2                      InitUart0ReceiveVar();
+ 165   2              }
+ 166   1      
+ 167   1      }
+ 168          
+ 169          void InitUart0ReceiveVar(void)
+ 170          {
+ 171   1              BYTE i;
+ 172   1      
+ 173   1              for(i=0;i<4;i++)
+ 174   1              {
+C51 COMPILER V9.60.0.0   UARTCFG                                                           08/31/2020 09:15:07 PAGE 4   
+
+ 175   2                      gUart0ReceivePduInfo.ReceiveBuff[i] = 0x0000;
+ 176   2                      gUart0ReceivePduInfo.ReceiveByteBuff[i] = 0x0000;
+ 177   2              }
+ 178   1              gUart0ReceivePduInfo.pReceiveData = gUart0ReceivePduInfo.ReceiveBuff;
+ 179   1              gUart0ReceivePduInfo.ReceiveByteIdx = 0;
+ 180   1              gUart0ReceivePduInfo.ReceiveCheckSum = 0;
+ 181   1              gUart0ReceivePduInfo.ReceiveDatalen = VechileDataLen;
+ 182   1              gUart0ReceivePduInfo.ReceiveERRFlag = NULL_ERR;
+ 183   1      
+ 184   1      
+ 185   1      }
+ 186          
+ 187          void   InitUart0AllVar(void)
+ 188          {
+ 189   1              UART0_DataInit();
+ 190   1              gslinContext.CommState = UART0_FRM_NULL;
+ 191   1              gslinContext.pCurFrameInfo = Uart0_NULL_PTR;
+ 192   1              gslinContext.pReceiveFrameInfo = Uart0_NULL_PTR;
+ 193   1              gslinContext.pCurFrameInfo->CurrentDataPtr = MsgBCM_Mode_Init;
+ 194   1              InitUart0ReceiveVar();
+ 195   1      
+ 196   1      
+ 197   1      }
+ 198          
+ 199          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1250    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     96       3
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

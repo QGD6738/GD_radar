@@ -1,0 +1,1385 @@
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 1   
+
+
+C51 COMPILER V9.53.0.0, COMPILATION OF MODULE DETECTOBJ
+OBJECT MODULE PLACED IN .\src\DetectObj.OBJ
+COMPILER INVOKED BY: d:\SiliconLabs\SimplicityStudio\v4\developer\toolchains\keil_8051\9.53\BIN\C51.exe G:\Office_inform
+                    -ation\souce_software\1_DFSK\F508\1_CODE\DFSK-F508-EFM8BB21F16G-C-QFN20\src\DetectObj.c OMF2 LARGE DEBUG OBJECTEXTEND ROM
+                    -(LARGE) WARNINGLEVEL(2) FLOATFUZZY(3) OPTIMIZE(8,SPEED) DEFINE(DEBUG=1) INTVECTOR(0X0000) INTPROMOTE INCDIR(G:\Office_in
+                    -formation\souce_software\1_DFSK\F508\1_CODE\DFSK-F508-EFM8BB21F16G-C-QFN20\inc;D:/SiliconLabs/SimplicityStudio/v4/develo
+                    -per/sdks/8051/v4.1.5//Device/shared/si8051base;D:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.5//Device/EFM
+                    -8BB2/inc) PRINT(.\src\DetectObj.lst) COND PAGEWIDTH(120) PAGELENGTH(65) OBJECT(.\src\DetectObj.OBJ)
+
+line level    source
+
+   1          /*********************************************************************************************************
+             -************
+   2          ** FILE NAME: DetectObj.c
+   3          **
+   4          ** PROJECT:  DFSK_F508_RADAR
+   5          ** CPU:      EFM8BB21F16G
+   6          ** COMPILER: SILICON
+   7          ** -------------------------------------------------------------------------------------------------------
+             -------------
+   8          ** VERSION:  V0.1
+   9          ** DATE:     2020.08.06
+  10          **********************************************************************************************************
+             -***********/
+  11          
+  12          #include "cpu.h"
+  13          #include "DetectObj.h"
+  14          #include "Timer.h"
+  15          #include "ADC.h"
+  16          #include "Command.h"
+  17          #include "Serial.h"
+  18          
+  19          //********************************************************************************************************
+             -*************
+  20          //** Declear the global variable
+  21          //********************************************************************************************************
+             -*************/
+  22          
+  23          #define INTERVAL_LEN    6
+  24          const BYTE  DetectInterval[INTERVAL_LEN] =
+  25          {
+  26           (1),(2),(4),(7),(3)
+  27          };
+  28          
+  29          BYTE xdata EachSNMaxDistance[SN_NUM];
+  30          
+  31          StNearestData   xdata   NearestData;
+  32          StDetInfo               xdata   DetInfo;
+  33          StEchoRawData   xdata   RawData;
+  34          StAnalysisData  xdata   AnsData;
+  35          StCmpData               xdata   CmpData;
+  36          StNoise                 xdata   Noise;
+  37          StDiagInfo              xdata   DiagInfo;
+  38          StCalibrationData xdata  ClrtData;
+  39          CALLBACK                xdata   DetObj_DataPrcs;
+  40          
+  41          /*const*/ WORD  TableWidth[] =
+  42          {
+  43                300,/*    0cm     ~       8.7cm   */
+  44                300,/*    8.7cm   ~       17.4cm  */
+  45                300,/*    17.4cm  ~       26.1cm  */
+  46                250,/*    26.1cm  ~       34.8cm  */
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 2   
+
+  47                200,/*    34.8cm  ~       43.5cm  */
+  48                200,/*    43.5cm  ~       52.2cm  */
+  49                200,/*    52.2cm  ~       60.9cm  */
+  50                200,/*    60.9cm  ~       69.6cm  */
+  51                200,/*    69.6cm  ~       78.3cm  */
+  52                200,/*    78.3cm  ~       87.0cm  */
+  53                200,/*    87.0cm  ~       95.7cm  */
+  54                200,/*    95.7cm  ~       104.4cm */
+  55                180,/*    104.4cm ~       113.1cm */
+  56                180,/*    113.1cm ~       121.8cm */
+  57                180,/*    121.8cm ~       130.5cm */
+  58                150,/*    130.5cm ~       139.2cm */
+  59                150,/*    139.2cm ~       147.9cm */
+  60                150,/*    147.9cm ~       156.6cm */
+  61                120,/*    156.6cm ~       165.3cm */
+  62                120,/*    165.3cm ~       174.0cm */
+  63          };
+  64          
+  65          const BYTE  TableHeight[] =
+  66          {
+  67                70, /*    0cm     ~       8.7cm   */
+  68                70, /*    8.7cm   ~       17.4cm  */
+  69                70, /*    17.4cm  ~       26.1cm  */
+  70                70, /*    26.1cm  ~       34.8cm  */
+  71                36, /*    34.8cm  ~       43.5cm  */
+  72                34, /*    43.5cm  ~       52.2cm  */
+  73                32, /*    52.2cm  ~       60.9cm  */
+  74                28, /*    60.9cm  ~       69.6cm  */
+  75                24, /*    69.6cm  ~       78.3cm  */
+  76                20, /*    78.3cm  ~       87.0cm  */
+  77                20, /*    87.0cm  ~       95.7cm  */
+  78                20, /*    95.7cm  ~       104.4cm */
+  79                16, /*    104.4cm ~       113.1cm */
+  80                16, /*    113.1cm ~       121.8cm */
+  81                14, /*    121.8cm ~       130.5cm */
+  82                    14, /*        130.5cm ~       139.2cm */
+  83                    14, /*        139.2cm ~       147.9cm */
+  84                    14, /*        147.9cm ~       156.6cm */
+  85                    14, /*        156.6cm ~       165.3cm */
+  86                14, /*    165.3cm ~       174.0cm */
+  87          };
+  88          
+  89          
+  90          void Null (void)
+  91          {
+  92   1      
+  93   1      }
+  94          void DetObj_InitSelfCheckVar(void)
+  95          {
+  96   1          BYTE i;
+  97   1          bSensorCheckFlag = TRUE;
+  98   1          DetInfo.bDetTimes = 2;
+  99   1          wSensorCheckTime = 300;
+ 100   1          CmpData.bFirstDataFlag = TRUE;
+ 101   1          NearestData.bRingTimeFlag = 0x0F;           //
+ 102   1          for(i=0;i<SN_NUM;i++)
+ 103   1          {
+ 104   2               Cmd.bSensorRun[i] = TRUE;
+ 105   2               NearestData.bEachNearestDistance[i] = 0xFF;;
+ 106   2          }
+ 107   1          NearestData.bNearestDistance = 0xFF;
+ 108   1          DetInfo.bDetState = DET_OBJ_DETECT_INIT;
+ 109   1          DetObj_Stop();
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 3   
+
+ 110   1      }
+ 111          
+ 112          void DetObj_InitVariable(void)
+ 113          {
+ 114   1              WORD i,j;
+ 115   1              DetInfo.bDetState = 0;
+ 116   1              DetInfo.bID = 0;
+ 117   1              DetInfo.bDetTriggerFlag = 0;
+ 118   1              //DetInfo.bDetSnNum = 0;
+ 119   1              DetInfo.bDetTimes = 0;
+ 120   1              DetInfo.bDetWaitTime = 0;
+ 121   1              DetInfo.bDetNoiseDelayTime = 0;
+ 122   1              //DetInfo.wDetRealTime = 0;
+ 123   1      
+ 124   1              //DiagInfo.bErrSnNum = 0;
+ 125   1              //DiagInfo.wPowerUpChimeTime = 0;
+ 126   1              DiagInfo.bErrCounter = 0;
+ 127   1              DiagInfo.bKeepFlag = 0;
+ 128   1              for(i=0;i<SN_NUM;i++)
+ 129   1              {
+ 130   2                      DiagInfo.bSelfCheckResult[i] = 0;
+ 131   2              }
+ 132   1      
+ 133   1              RawData.wStartTime = 0;
+ 134   1              RawData.bAdcBfIndex = 0;
+ 135   1              for(i=0;i<10;i++)
+ 136   1              {
+ 137   2                      RawData.bAdcBuffer[i] = 0;
+ 138   2              }
+ 139   1              RawData.wRawDataIndex = 0;
+ 140   1              for(i=0;i<DETECT_BUFFER_LENGTH;i++)
+ 141   1              {
+ 142   2                      RawData.bRawDataBuffer[i] = 0;
+ 143   2              }
+ 144   1      
+ 145   1              AnsData.bDetSampThre = 0;
+ 146   1              AnsData.bObsSigStartFlag = 0;
+ 147   1          //AnsData.wObsSigStartCnt = 0;
+ 148   1          //AnsData.wObsSigOverCnt = 0;
+ 149   1              AnsData.wObsSigExitCnt = 0;
+ 150   1              AnsData.bObsSigVolInto = 0;
+ 151   1              AnsData.bObsSigVolExit = 0;
+ 152   1              AnsData.wObsSigTimeInto = 0;
+ 153   1              AnsData.wObsSigTimeWidth = 0;
+ 154   1              AnsData.bObsSigVolHeight = 0;
+ 155   1      #ifdef  EEPROM
+                      AnsData.bSampSN = 0;
+              #endif
+ 158   1      
+ 159   1              CmpData.bFirstDataFlag = 0;
+ 160   1          CmpData.bCurBfNumber = 0;
+ 161   1              CmpData.CCD.bDataValid = 0;
+ 162   1              CmpData.CCD.wDetTime = 0;
+ 163   1              CmpData.CCD.wRingTime = 0;
+ 164   1              CmpData.CCD.bDataNum = 0;
+ 165   1              CmpData.CCD.bSampThre = 0;
+ 166   1              for(i=0;i<OBJ_NUM;i++)
+ 167   1              {
+ 168   2                      CmpData.CCD.bObsDistance[i] = 0;
+ 169   2              }
+ 170   1              for(i=0;i<DETECT_CMP_BUFFER_LENGTH;i++)
+ 171   1              {
+ 172   2                      CmpData.EPD[i].bDataValid = 0;
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 4   
+
+ 173   2                      CmpData.EPD[i].wDetTime = 0;
+ 174   2                      CmpData.EPD[i].wRingTime = 0;
+ 175   2                      CmpData.EPD[i].bDataNum = 0;
+ 176   2                      CmpData.EPD[i].bSampThre = 0;
+ 177   2                      for(j=0;j<OBJ_NUM;j++)
+ 178   2                      {
+ 179   3                              CmpData.EPD[i].bObsDistance[j] = 0;
+ 180   3                      }
+ 181   2                      CmpData.Ns[i].bEchoRaisedTimes = 0;
+ 182   2                      CmpData.Ns[i].bNoiseRaisedTimes = 0;
+ 183   2                      CmpData.Ns[i].dObsIntegralArea = 0;
+ 184   2                      CmpData.Ns[i].dNseIntegralArea = 0;
+ 185   2                      CmpData.Ns[i].bNoiseMuchFlag = 0;
+ 186   2                      CmpData.Ns[i].eObsNsType = OBS_BLUE;
+ 187   2              }
+ 188   1      
+ 189   1              NearestData.bRingTimeFlag = 0;
+ 190   1              NearestData.wUpdataDelay = 0;
+ 191   1              NearestData.bNearestDistance = 0;
+ 192   1              for(i=0;i<OBJ_NUM;i++)
+ 193   1              {
+ 194   2                      NearestData.bEachNearestDistance[i] = 0;
+ 195   2              }
+ 196   1              NearestData.wRingTime = 0;
+ 197   1              NearestData.bRingTimeBounceFlag = 0;
+ 198   1      
+ 199   1              ClrtData.wRingTime = 0;
+ 200   1              ClrtData.wTimeWidth = 0;
+ 201   1              ClrtData.bVolHeight = 0;
+ 202   1              ClrtData.bDistance = 0;
+ 203   1      
+ 204   1      }
+ 205          
+ 206          void DetObj_InitAllChannelDistance(void)
+ 207          {
+ 208   1          BYTE xdata i;
+ 209   1          DetInfo.bDetTimes = 2;
+ 210   1          CmpData.bFirstDataFlag = TRUE;
+ 211   1          NearestData.bRingTimeFlag = 0x0F;
+ 212   1          for(i=0;i<SN_NUM;i++)
+ 213   1          {
+ 214   2               NearestData.bEachNearestDistance[i] = 0xFF;
+ 215   2               Cmd.bDistance[i] = 0xFF;
+ 216   2               Cmd.bObsorient[i] = 0x00;
+ 217   2          }
+ 218   1          Cmd.bBuzzerInfo = 0x00;
+ 219   1          NearestData.bNearestDistance = 0xFF;
+ 220   1          DetInfo.bDetState = WAIT_DET_CMD;
+ 221   1          DetObj_Stop();
+ 222   1      }
+ 223          
+ 224          void DetObj_RealTimeClock(void)
+ 225          {
+ 226   1          DetInfo.wDetRealTime++;
+ 227   1          if(NearestData.wUpdataDelay > 0)
+ 228   1          {
+ 229   2              NearestData.wUpdataDelay--;
+ 230   2          }
+ 231   1      }
+ 232          //
+ 233          //void DetObj_SelfCheck(void)
+ 234          //{
+ 235          //    switch(DetInfo.bDetState)
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 5   
+
+ 236          //    {
+ 237          //        case DET_OBJ_DETECT_INIT:
+ 238          //            if(DetInfo.bDetWaitTime > 0 )
+ 239          //            {
+ 240          //                DetInfo.bDetWaitTime--;
+ 241          //            }
+ 242          //            else
+ 243          //            {
+ 244          //                if(DetInfo.bDetTimes > 0)
+ 245          //                {
+ 246          //                    DetInfo.bDetTimes --;
+ 247          //                }
+ 248          //                else
+ 249          //                {
+ 250          //                    DetObj_DiagnosticTheSensor();
+ 251          //                    DetObj_InitTheEPD();
+ 252          //                    DetObj_InitTheCCD();
+ 253          //                }
+ 254          //                DetObj_ClearTheRawDataBuff();
+ 255          //                /* Change the detect state. */
+ 256          //                DetInfo.bDetState = DET_OBJ_NOISE_SAMPLING;
+ 257          //            }
+ 258          //            break;
+ 259          //        case DET_OBJ_NOISE_SAMPLING:
+ 260          //            DetInfo.bDetWaitTime = DETECT_MAX_SAMPLING;
+ 261          //            DetObj_ClearTheRawDataBuff();
+ 262          //            ADC_InitDetect();
+ 263          //            DetObj_Start();
+ 264          //            DetInfo.bDetState = DET_OBJ_WAIT_SAMPLING;
+ 265          //            break;
+ 266          //        case DET_OBJ_WAIT_SAMPLING:
+ 267          //            if(DetInfo.bDetWaitTime > 0)DetInfo.bDetWaitTime--;
+ 268          //            else
+ 269          //            {
+ 270          //                DetObj_Stop();
+ 271          //                DetObj_CalSampNoise();
+ 272          //                DetInfo.bDetState = DET_OBJ_START_DETECT_OBSTACLE;
+ 273          //            }
+ 274          //            break;
+ 275          //      case DET_OBJ_START_DETECT_OBSTACLE:
+ 276          //            DetObj_ClearTheRawDataBuff();
+ 277          //            DetObj_ClearTheNoiseBuff();
+ 278          //            DetObj_InitTheEPD();
+ 279          //            DetObj_SendThe58KhzUltraSonic();/* Need polishing send ultrasonic wave used time*/
+ 280          //            ADC_InitDetect();
+ 281          //            DetObj_Start();
+ 282          //            DetInfo.bDetWaitTime = DETECT_MAX_DISTANCE_150CM;
+ 283          //            CmpData.EPD[CmpData.bCurBfNumber].wDetTime = DetInfo.wDetRealTime;
+ 284          //            DetInfo.bDetState = DET_OBJ_WAIT_ECHO;
+ 285          //            break;
+ 286          //        case DET_OBJ_WAIT_ECHO:
+ 287          //        {
+ 288          //            if(DetInfo.bDetWaitTime > 0)DetInfo.bDetWaitTime--;
+ 289          //            else
+ 290          //            {
+ 291          //                DetObj_Stop();
+ 292          //                DetObj_RawEchoDataAns();
+ 293          //                DetObj_DiagnosticTheRingTime();
+ 294          //                DetInfo.bDetNoiseDelayTime = 5;
+ 295          //                DetInfo.bDetState = DET_OBJ_DETECT_INIT;     /* Change the detect state. */
+ 296          //            }
+ 297          //            break;
+ 298          //        }
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 6   
+
+ 299          //        default:
+ 300          //        {
+ 301          //            Cpu_InitHardwarePort();    /* Initial the hardware config for echo detecting block. */
+ 302          //            DetInfo.bDetState = DET_OBJ_DETECT_INIT;
+ 303          //            break;
+ 304          //        }
+ 305          //    }
+ 306          //}
+ 307          
+ 308          void DetObj_SendThe58KhzUltraSonic(void)
+ 309          {
+ 310   1          volatile BYTE xdata i;
+ 311   1      
+ 312   1          Cpu_DisableInterrupt();
+ 313   1          for(i=PULE_NUM;i>0;i--)             /* Send the 58KHz ultrasonic. */
+ 314   1          {
+ 315   2              DRIVE_PORT_1 = 0;
+ 316   2              DRIVE_PORT_2 = 1;
+ 317   2              Delay1us(6);
+ 318   2              NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();
+ 319   2              NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();
+ 320   2              DRIVE_PORT_1 = 1;
+ 321   2              DRIVE_PORT_2 = 0;
+ 322   2              Delay1us(6);
+ 323   2              NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();NOP();
+ 324   2          }
+ 325   1          DRIVE_PORT_1 = 0;
+ 326   1          DRIVE_PORT_2 = 0;
+ 327   1          RawData.wStartTime = PULE_NUM*17;
+ 328   1          Cpu_EnableInterrupt();
+ 329   1      }
+ 330          
+ 331          
+ 332          /*********************************************************************************************************
+             -************
+ 333          ** Diagnostic.
+ 334          **********************************************************************************************************
+             -***********/
+ 335          void DetObj_DiagnosticTheSensor(void)
+ 336          {
+ 337   1          if(DiagInfo.bErrCounter >  SN_ERR_THRESHOLD)
+ 338   1          {
+ 339   2              DiagInfo.bSelfCheckResult[DetInfo.bID] = 1;
+ 340   2          }
+ 341   1          else
+ 342   1          {
+ 343   2              DiagInfo.bSelfCheckResult[DetInfo.bID] = 0;
+ 344   2          }
+ 345   1      }
+ 346          
+ 347          /*********************************************************************************************************
+             -************
+ 348          ** Process the echo.
+ 349          **********************************************************************************************************
+             -***********/
+ 350          void DetObj_PreEchoProcess(void)
+ 351          {
+ 352   1      }
+ 353          
+ 354          /*********************************************************************************************************
+             -************
+ 355          ** Diagnostic the ring time.
+ 356          **********************************************************************************************************
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 7   
+
+             -***********/
+ 357          void DetObj_DiagnosticTheRingTime(void)
+ 358          {
+ 359   1          if(NearestData.bRingTimeFlag > 0)
+ 360   1          {
+ 361   2              if((CmpData.EPD[CmpData.bCurBfNumber].wRingTime > RING_TIME_MIN_VALUE) &&
+ 362   2                 (CmpData.EPD[CmpData.bCurBfNumber].wRingTime < RING_TIME_MID_VALUE))
+ 363   2              {
+ 364   3                  NearestData.bRingTimeFlag >>= 1;
+ 365   3                  NearestData.wRingTime = CmpData.EPD[CmpData.bCurBfNumber].wRingTime;
+ 366   3                  if(DiagInfo.bErrCounter > 0)
+ 367   3                  {
+ 368   4                      DiagInfo.bErrCounter--;
+ 369   4                  }
+ 370   3              }
+ 371   2              else if((CmpData.EPD[CmpData.bCurBfNumber].wRingTime >= RING_TIME_MID_VALUE) &&
+ 372   2                      (CmpData.EPD[CmpData.bCurBfNumber].wRingTime < RING_TIME_MAX_VALUE_WITH_OBSTACLE))
+ 373   2              {
+ 374   3                  NearestData.bRingTimeFlag >>= 1;
+ 375   3                  NearestData.wRingTime = RING_TIME_MID_VALUE;
+ 376   3              }
+ 377   2              else
+ 378   2              {
+ 379   3                  if(DiagInfo.bErrCounter < 8)
+ 380   3                  {
+ 381   4                      DiagInfo.bErrCounter++;
+ 382   4                  }
+ 383   3              }
+ 384   2                      if(NearestData.wRingTime < RING_TIME_RECOVER_VALUE)
+ 385   2                      {
+ 386   3                              NearestData.wRingTime = RING_TIME_MID_VALUE;
+ 387   3                      }
+ 388   2          }
+ 389   1          else
+ 390   1          {
+ 391   2              /* Diagnostic the sensor. */
+ 392   2              if((CmpData.EPD[CmpData.bCurBfNumber].wRingTime > RING_TIME_MAX_VALUE_WITH_OBSTACLE) ||
+ 393   2                 (CmpData.EPD[CmpData.bCurBfNumber].wRingTime < RING_TIME_MIN_VALUE))
+ 394   2              {
+ 395   3                  if(DiagInfo.bErrCounter < 8)
+ 396   3                  {
+ 397   4                      DiagInfo.bErrCounter++;
+ 398   4                  }
+ 399   3              }
+ 400   2              else
+ 401   2              {
+ 402   3                  /* If the ring time is valid. Renew it, or abandon it. */
+ 403   3                  if(DiagInfo.bErrCounter > 0)
+ 404   3                  {
+ 405   4                      DiagInfo.bErrCounter--;
+ 406   4                  }
+ 407   3              }
+ 408   2          }
+ 409   1          DetObj_DiagnosticTheSensor();
+ 410   1      }
+ 411          
+ 412          ///*******************************************************************************************************
+             -**************
+ 413          //** Save interrupt data into buff.
+ 414          //********************************************************************************************************
+             -*************/
+ 415          
+ 416          void DetObj_Start(void)
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 8   
+
+ 417          {
+ 418   1          Time_InitAdcTriggerTimer();
+ 419   1          Time_StartAdcTrigger();
+ 420   1          ADC_Start();
+ 421   1      }
+ 422          
+ 423          void DetObj_Stop(void)
+ 424          {
+ 425   1          Time_StopAdcTrigger();
+ 426   1          ADC_Stop();
+ 427   1      }
+ 428          
+ 429          void DetObj_InitTheAnalysisData(void)
+ 430          {
+ 431   1          AnsData.bObsSigStartFlag = FALSE;
+ 432   1      }
+ 433          
+ 434          /*********************************************************************************************************
+             -************
+ 435          ** Initial the current buff.
+ 436          **********************************************************************************************************
+             -***********/
+ 437          void DetObj_InitTheEPD(void)
+ 438          {
+ 439   1          BYTE i;
+ 440   1          CmpData.EPD[CmpData.bCurBfNumber].bDataValid = FALSE;
+ 441   1          CmpData.EPD[CmpData.bCurBfNumber].wDetTime = 0;
+ 442   1          CmpData.EPD[CmpData.bCurBfNumber].wRingTime = 0xFFFF;
+ 443   1          CmpData.EPD[CmpData.bCurBfNumber].bDataNum = 0;
+ 444   1      
+ 445   1          ClrtData.bDistance  = 0XFF;
+ 446   1          ClrtData.bVolHeight = 0;
+ 447   1          ClrtData.wTimeWidth = 0;
+ 448   1          ClrtData.wRingTime  = 0;
+ 449   1      
+ 450   1          for(i=0; i<OBJ_NUM; i++)
+ 451   1          {
+ 452   2              CmpData.EPD[CmpData.bCurBfNumber].bObsDistance[i] = NO_OBJ;
+ 453   2          }
+ 454   1      }
+ 455          
+ 456          /*********************************************************************************************************
+             -************
+ 457          ** Initial the compare buff.
+ 458          **********************************************************************************************************
+             -***********/
+ 459          void DetObj_InitTheCCD(void)
+ 460          {
+ 461   1          BYTE i;
+ 462   1          CmpData.CCD.bDataValid = FALSE;
+ 463   1          CmpData.CCD.wDetTime = 0;
+ 464   1          CmpData.CCD.wRingTime = 0xFFFF;
+ 465   1          CmpData.CCD.bDataNum = 0;
+ 466   1          DiagInfo.bKeepFlag = FALSE;
+ 467   1      
+ 468   1          CmpData.bCurBfNumber = 0;
+ 469   1          CmpData.bFirstDataFlag = TRUE;
+ 470   1          for(i=0; i<DETECT_CMP_BUFFER_LENGTH; i++)
+ 471   1          {
+ 472   2              CmpData.EPD[i].bDataValid = FALSE;
+ 473   2          }
+ 474   1          for(i=0; i<OBJ_NUM; i++)
+ 475   1          {
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 9   
+
+ 476   2              CmpData.CCD.bObsDistance[i] = NO_OBJ;
+ 477   2          }
+ 478   1      }
+ 479          
+ 480          /*********************************************************************************************************
+             -************
+ 481          ** Clear the raw data buff.
+ 482          **********************************************************************************************************
+             -***********/
+ 483          void DetObj_ClearTheRawDataBuff(void)
+ 484          {
+ 485   1          WORD i;
+ 486   1          for(i=0; i<DETECT_BUFFER_LENGTH;i++)
+ 487   1          {
+ 488   2              RawData.bRawDataBuffer[i] = 0;
+ 489   2          }
+ 490   1          RawData.wRawDataIndex = 0;
+ 491   1          RawData.wStartTime = 0;
+ 492   1          DetObj_InitTheAnalysisData();
+ 493   1      }
+ 494          
+ 495          BYTE GetDistance(WORD ObsTime,WORD EchoWidth,BYTE VolHeight)
+ 496          {
+ 497   1          BYTE ret = NO_OBJ;
+ 498   1          BYTE Index;
+ 499   1      
+ 500   1          Index = ObsTime >> 9;
+ 501   1          if(EchoWidth >= TableWidth[Index] && VolHeight >= TableHeight[Index])
+ 502   1          {
+ 503   2              ObsTime >>= 7;
+ 504   2              ret = (ObsTime*557) >> 8;
+ 505   2          }
+ 506   1          return ret;
+ 507   1      }
+ 508          
+ 509          /*********************************************************************************************************
+             -************
+ 510          ** Clear the noise buff.
+ 511          **********************************************************************************************************
+             -***********/
+ 512          void DetObj_ClearTheNoiseBuff(void)
+ 513          {
+ 514   1          CmpData.Ns[CmpData.bCurBfNumber].eObsNsType= OBS_BLUE;
+ 515   1          CmpData.Ns[CmpData.bCurBfNumber].bEchoRaisedTimes = 0;
+ 516   1          CmpData.Ns[CmpData.bCurBfNumber].bNoiseRaisedTimes = 0;
+ 517   1          CmpData.Ns[CmpData.bCurBfNumber].dNseIntegralArea = 0;
+ 518   1          CmpData.Ns[CmpData.bCurBfNumber].dObsIntegralArea = 0;
+ 519   1          CmpData.Ns[CmpData.bCurBfNumber].bNoiseMuchFlag = FALSE;
+ 520   1      }
+ 521          
+ 522          void DetObj_CopySamplingBuffer(BYTE* SP, BYTE* EP, BYTE Len)
+ 523          {
+ 524   1          BYTE i;
+ 525   1          for(i=0; i<Len; i++)
+ 526   1          {
+ 527   2              *(EP+i) = *(SP+i);
+ 528   2          }
+ 529   1      }
+ 530          
+ 531          #define NULL_DATA_LEN    2
+ 532          void DetObj_CalSampNoise(void)
+ 533          {
+ 534   1          BYTE xdata i,j;
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 10  
+
+ 535   1          BYTE xdata temp;
+ 536   1          BYTE xdata add;
+ 537   1          WORD xdata AdLow,AdMid,AdHigh;
+ 538   1      
+ 539   1          DetObj_CopySamplingBuffer(RawData.bRawDataBuffer,(&RawData.bRawDataBuffer[RawData.wRawDataIndex+1]),(4
+             -8+NULL_DATA_LEN));
+ 540   1      
+ 541   1          add = RawData.wRawDataIndex + 1 + NULL_DATA_LEN;
+ 542   1      
+ 543   1          for(i=add; i<48+add; i++)
+ 544   1          {
+ 545   2              for(j=i; j<48+add; j++)
+ 546   2              {
+ 547   3                  if(RawData.bRawDataBuffer[i] > RawData.bRawDataBuffer[j])
+ 548   3                  {
+ 549   4                      temp = RawData.bRawDataBuffer[i];
+ 550   4                      RawData.bRawDataBuffer[i] = RawData.bRawDataBuffer[j];
+ 551   4                      RawData.bRawDataBuffer[j] = temp;
+ 552   4                  }
+ 553   3              }
+ 554   2          }
+ 555   1          AdLow = 0;
+ 556   1          AdMid = 0;
+ 557   1          AdHigh = 0;
+ 558   1          for(i=add; i<16+add;i++)
+ 559   1          {
+ 560   2              AdLow  += RawData.bRawDataBuffer[i];
+ 561   2              AdMid  += RawData.bRawDataBuffer[i+16];
+ 562   2              AdHigh += RawData.bRawDataBuffer[i+32];
+ 563   2          }
+ 564   1          AdLow >>= 4;
+ 565   1          AdMid >>= 4;
+ 566   1          AdHigh>>= 4;
+ 567   1      
+ 568   1          AnsData.bDetSampThre = AdMid + ((AdHigh-AdMid)>>2);
+ 569   1      
+ 570   1          if(AnsData.bDetSampThre > DETECT_NOISE_BASE_VOL)
+ 571   1          {
+ 572   2              temp = AnsData.bDetSampThre - DETECT_NOISE_BASE_VOL;
+ 573   2                      temp = temp>>2;
+ 574   2                      AnsData.bDetSampThre += (temp*temp); //scaled-up
+ 575   2          }
+ 576   1      
+ 577   1      #ifdef EEPROM
+                  AnsData.bDetSampThre += AnsData.bSampSN;
+              #endif
+ 580   1      
+ 581   1          if(AnsData.bDetSampThre > DETECT_NOISE_MAX_VOL)
+ 582   1          {
+ 583   2              AnsData.bDetSampThre = DETECT_NOISE_MAX_VOL;
+ 584   2              CmpData.Ns[CmpData.bCurBfNumber].eObsNsType = OBS_RED;
+ 585   2          }
+ 586   1          else if(AnsData.bDetSampThre > DETECT_NOISE_MID_VOL)
+ 587   1          {
+ 588   2              CmpData.Ns[CmpData.bCurBfNumber].eObsNsType = OBS_YELLOW;
+ 589   2          }
+ 590   1          else
+ 591   1          {
+ 592   2              CmpData.Ns[CmpData.bCurBfNumber].eObsNsType = OBS_BLUE;
+ 593   2          }
+ 594   1          CmpData.EPD[CmpData.bCurBfNumber].bSampThre = AnsData.bDetSampThre;
+ 595   1      
+ 596   1          DetObj_RawNoiseDataAns();
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 11  
+
+ 597   1      
+ 598   1      }
+ 599          
+ 600          
+ 601          void DetObj_RawFilter(void)
+ 602          {
+ 603   1          WORD xdata i = 0;
+ 604   1          WORD xdata j = 0;
+ 605   1          WORD xdata k = 0;
+ 606   1          BYTE xdata Temp = 0;
+ 607   1      
+ 608   1      #ifdef   START_VALUE_POLISHING
+ 609   1          for(i=0;i<RawData.wRawDataIndex;i++)
+ 610   1          {
+ 611   2              if(RawData.bRawDataBuffer[i] != 0)
+ 612   2              {
+ 613   3                  Temp = RawData.bRawDataBuffer[i];
+ 614   3                  j = i;
+ 615   3                  if(j > START_VALUE_POLISHING_LEN)
+ 616   3                  {
+ 617   4                      DiagInfo.bErrCounter++;
+ 618   4                  }
+ 619   3                  break;
+ 620   3              }
+ 621   2          }
+ 622   1          for(i=0; i<j; i++)
+ 623   1          {
+ 624   2              RawData.bRawDataBuffer[i] = Temp;
+ 625   2          }
+ 626   1      #endif
+ 627   1      
+ 628   1      #ifdef   SINGLE_POINT_JUMP_ZERO_FILTER
+ 629   1          for(i=1; i<(RawData.wRawDataIndex-1);i++)
+ 630   1          {
+ 631   2              if(RawData.bRawDataBuffer[i] == 0)
+ 632   2              {
+ 633   3                  /*if(RawData.bRawDataBuffer[i-1] > (AnsData.bDetSampThre<<1) &&
+ 634   3                     RawData.bRawDataBuffer[i+1] > (AnsData.bDetSampThre<<1)   )*/
+ 635   3                  {
+ 636   4                      RawData.bRawDataBuffer[i] = RawData.bRawDataBuffer[i-1];
+ 637   4                  }
+ 638   3              }
+ 639   2          }
+ 640   1      #endif
+ 641   1      
+ 642   1      #ifdef    PEAK_DISTURB_FILTER
+ 643   1          for(i=5; i<(RawData.wRawDataIndex-2);i++)
+ 644   1          {
+ 645   2              if(RawData.bRawDataBuffer[i+1] > RawData.bRawDataBuffer[i]+PEAK_DISTURB_FILTER_HIGH &&
+ 646   2                 RawData.bRawDataBuffer[i+2] > RawData.bRawDataBuffer[i]+PEAK_DISTURB_FILTER_HIGH+(PEAK_DISTURB_
+             -FILTER_HIGH>>1))
+ 647   2              {
+ 648   3                  for(j=i+1; j<(i+(PEAK_DISTURB_FILTER_WIDTH/COUNT_TIME_UNIT));j++)
+ 649   3                  {
+ 650   4                      if(RawData.bRawDataBuffer[j] < RawData.bRawDataBuffer[i]+(PEAK_DISTURB_FILTER_HIGH>>2))
+ 651   4                      {
+ 652   5                          CmpData.Ns[CmpData.bCurBfNumber].bEchoRaisedTimes++;
+ 653   5                          for(k=i; k<j;k++)
+ 654   5                          {
+ 655   6                              RawData.bRawDataBuffer[k] = RawData.bRawDataBuffer[i-1];
+ 656   6                          }
+ 657   5                          break;
+ 658   5                      }
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 12  
+
+ 659   4                  }
+ 660   3              }
+ 661   2          }
+ 662   1      #endif
+ 663   1      }
+ 664          
+ 665          void DetObj_RawEchoDataAns(void)
+ 666          {
+ 667   1          WORD xdata i;
+ 668   1          BYTE xdata Distc;
+ 669   1          WORD xdata EchoWidth;
+ 670   1      
+ 671   1          WORD xdata ObsStartThre;
+ 672   1          WORD xdata ObsExitThreFixed;
+ 673   1      
+ 674   1      
+ 675   1          ObsStartThre = CmpData.EPD[CmpData.bCurBfNumber].bSampThre + OBSTACLE_START_VOL;
+ 676   1          /* subtractive sampling noise */
+ 677   1          ObsExitThreFixed = CmpData.EPD[CmpData.bCurBfNumber].bSampThre -
+ 678   1                            (CmpData.EPD[CmpData.bCurBfNumber].bSampThre >> OBSTACLE_EXIT_VOL_SHIFT);
+ 679   1      
+ 680   1          DetObj_RawFilter();
+ 681   1      
+ 682   1          RawData.bRawDataBuffer[RawData.wRawDataIndex-1] = 0; /* the farthest distance exit flag */
+ 683   1      
+ 684   1          /* Analyze detect data */
+ 685   1          for(i=0; i<RawData.wRawDataIndex;i++)
+ 686   1          {
+ 687   2              CmpData.Ns[CmpData.bCurBfNumber].dObsIntegralArea += RawData.bRawDataBuffer[i];
+ 688   2              if(RawData.bRawDataBuffer[i] > ObsStartThre)
+ 689   2              {
+ 690   3                  if(AnsData.bObsSigStartFlag == FALSE)
+ 691   3                  {
+ 692   4                      //AnsData.wObsSigOverCnt = 0;
+ 693   4                      //if(++AnsData.wObsSigStartCnt > 0)
+ 694   4                      {
+ 695   5                          AnsData.bObsSigStartFlag = TRUE;
+ 696   5                          AnsData.bObsSigVolInto = RawData.bRawDataBuffer[i];
+ 697   5                          AnsData.wObsSigTimeInto = RawData.wStartTime + i*COUNT_TIME_UNIT;
+ 698   5                          AnsData.wObsSigTimeWidth = 0;
+ 699   5                          AnsData.bObsSigVolHeight = 0;
+ 700   5                          AnsData.wObsSigExitCnt = 0;
+ 701   5                      }
+ 702   4                  }
+ 703   3              }
+ 704   2              /* this possible rewrite packaging a function , differentiate the different of noise*/
+ 705   2              if(RawData.bRawDataBuffer[i] < (ObsExitThreFixed+(AnsData.bObsSigVolHeight>>OBSTACLE_EXIT_VOL_SHIF
+             -T)))
+ 706   2              {
+ 707   3                  if(AnsData.bObsSigStartFlag == TRUE)
+ 708   3                  {
+ 709   4                      //AnsData.wObsSigStartCnt = 0;
+ 710   4                      //if(++AnsData.wObsSigOverCnt > 0)
+ 711   4                      {
+ 712   5                          AnsData.bObsSigStartFlag = FALSE;
+ 713   5                          if(AnsData.bObsSigVolHeight > (DETECT_NOISE_BASE_VOL<<1)
+ 714   5                          && AnsData.wObsSigTimeWidth > DETECT_NOISE_WIDTH )
+ 715   5                          {
+ 716   6                              CmpData.Ns[CmpData.bCurBfNumber].bEchoRaisedTimes++;
+ 717   6                          }
+ 718   5                          AnsData.bObsSigVolExit = RawData.bRawDataBuffer[i];
+ 719   5                          /* generate obstacle distance */
+ 720   5                          if(CmpData.EPD[CmpData.bCurBfNumber].bDataNum == 0)
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 13  
+
+ 721   5                          {
+ 722   6                              CmpData.EPD[CmpData.bCurBfNumber].wRingTime = RawData.wStartTime + AnsData.wObsSig
+             -TimeWidth + ((AnsData.bObsSigVolExit)<<0);
+ 723   6                              ClrtData.wRingTime = CmpData.EPD[CmpData.bCurBfNumber].wRingTime;
+ 724   6                              CmpData.EPD[CmpData.bCurBfNumber].bDataNum++;
+ 725   6                              continue;
+ 726   6                          }
+ 727   5      
+ 728   5      #ifdef  OBS_ECHO_WIDTH_COMPEN
+ 729   5                          EchoWidth = AnsData.wObsSigTimeWidth + ((AnsData.bObsSigVolInto + AnsData.bObsSigVolEx
+             -it) << 0); // y = x;
+ 730   5      #else
+                                  EchoWidth = AnsData.wObsSigTimeWidth;
+              #endif
+ 733   5                          if(CmpData.EPD[CmpData.bCurBfNumber].bDataNum < OBJ_NUM)
+ 734   5                          {
+ 735   6                              Distc = GetDistance(AnsData.wObsSigTimeInto,EchoWidth,AnsData.bObsSigVolHeight);
+ 736   6                              if(Distc != NO_OBJ)
+ 737   6                              {
+ 738   7                                  CmpData.EPD[CmpData.bCurBfNumber].bObsDistance[CmpData.EPD[CmpData.bCurBfNumbe
+             -r].bDataNum] = Distc;
+ 739   7                                  if(CmpData.EPD[CmpData.bCurBfNumber].bDataNum == 1)
+ 740   7                                  {
+ 741   8                                      ClrtData.wTimeWidth = EchoWidth;
+ 742   8                                      ClrtData.bVolHeight = AnsData.bObsSigVolHeight;
+ 743   8                                     // ClrtData.bDistance = NearestData.bEachNearestDistance[DetInfo.bID];
+ 744   8                                  }
+ 745   7                                  CmpData.EPD[CmpData.bCurBfNumber].bDataNum++;
+ 746   7                              }
+ 747   6                          }
+ 748   5                      }
+ 749   4                  }
+ 750   3              }
+ 751   2      
+ 752   2              if(AnsData.bObsSigStartFlag == TRUE)
+ 753   2              {
+ 754   3                  AnsData.wObsSigTimeWidth += COUNT_TIME_UNIT;
+ 755   3                  if(AnsData.bObsSigVolHeight < RawData.bRawDataBuffer[i])
+ 756   3                  {
+ 757   4                      AnsData.bObsSigVolHeight = RawData.bRawDataBuffer[i];
+ 758   4                  }
+ 759   3                  /*voltage signel height donot increase to time£¬exit check; use to sampling voltage is relativ
+             -ely low*/
+ 760   3                  if(AnsData.bObsSigVolHeight < (ObsStartThre <<1) &&
+ 761   3                     AnsData.wObsSigTimeWidth < ((WORD)COUNT_TIME_UNIT<<3)) /* sampling of 8 time */
+ 762   3                  {
+ 763   4                      if(++AnsData.wObsSigExitCnt >= 4)
+ 764   4                      {
+ 765   5                          AnsData.bObsSigStartFlag = FALSE;
+ 766   5                      }
+ 767   4                  }
+ 768   3              }
+ 769   2          }
+ 770   1      
+ 771   1          CmpData.EPD[CmpData.bCurBfNumber].bDataValid = TRUE;
+ 772   1      
+ 773   1      }
+ 774          
+ 775          void DetObj_RawNoiseDataAns(void)
+ 776          {
+ 777   1          WORD xdata i = 0;
+ 778   1      
+ 779   1          RawData.bRawDataBuffer[RawData.wRawDataIndex-1] = 0; /* the farthest distance exit flag */
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 14  
+
+ 780   1      
+ 781   1          /* Analyze noise data */
+ 782   1          for(i=0; i<RawData.wRawDataIndex;i++)
+ 783   1          {
+ 784   2              CmpData.Ns[CmpData.bCurBfNumber].dNseIntegralArea += RawData.bRawDataBuffer[i];
+ 785   2              if(RawData.bRawDataBuffer[i] > AnsData.bDetSampThre+OBSTACLE_START_VOL)
+ 786   2              {
+ 787   3                  if(AnsData.bObsSigStartFlag == FALSE)
+ 788   3                  {
+ 789   4                      //AnsData.wObsSigOverCnt = 0;
+ 790   4                      //if(++AnsData.wObsSigStartCnt > 1)
+ 791   4                      {
+ 792   5                          AnsData.bObsSigStartFlag = TRUE;
+ 793   5                          AnsData.bObsSigVolHeight = 0;
+ 794   5                          AnsData.wObsSigTimeWidth = 0;
+ 795   5                      }
+ 796   4                  }
+ 797   3              }
+ 798   2              else if(RawData.bRawDataBuffer[i] < (AnsData.bObsSigVolHeight>>OBSTACLE_EXIT_VOL_SHIFT))
+ 799   2              {
+ 800   3                  if(AnsData.bObsSigStartFlag == TRUE)
+ 801   3                  {
+ 802   4                      //AnsData.wObsSigStartCnt = 0;
+ 803   4                      //if(++AnsData.wObsSigOverCnt > 0)
+ 804   4                      {
+ 805   5                          AnsData.bObsSigStartFlag = FALSE;
+ 806   5                          if(AnsData.bObsSigVolHeight > (DETECT_NOISE_BASE_VOL<<1)
+ 807   5                          && AnsData.wObsSigTimeWidth > DETECT_NOISE_WIDTH )
+ 808   5                          {
+ 809   6                              CmpData.Ns[CmpData.bCurBfNumber].bNoiseRaisedTimes++;
+ 810   6                          }
+ 811   5                      }
+ 812   4                  }
+ 813   3              }
+ 814   2      
+ 815   2              if(AnsData.bObsSigStartFlag == TRUE)
+ 816   2              {
+ 817   3                  AnsData.wObsSigTimeWidth += COUNT_TIME_UNIT;
+ 818   3                  if(AnsData.bObsSigVolHeight < RawData.bRawDataBuffer[i])
+ 819   3                  {
+ 820   4                      AnsData.bObsSigVolHeight = RawData.bRawDataBuffer[i];
+ 821   4                  }
+ 822   3              }
+ 823   2          }
+ 824   1      }
+ 825          
+ 826          /*********************************************************************************************************
+             -************
+ 827          ** Detect the obstacle.
+ 828          **********************************************************************************************************
+             -***********/
+ 829          void DetObj_DetTheObj(void)
+ 830          {
+ 831   1          switch(DetInfo.bDetState)
+ 832   1          {
+ 833   2            case WAIT_DET_CMD:
+ 834   2                  /* add your code to here */
+ 835   2                      Cmd_Process();
+ 836   2                  //DetInfo.bDetTriggerFlag = TRUE;
+ 837   2                  if(DetInfo.bDetTriggerFlag == TRUE)//Detect cmd is true
+ 838   2                  {
+ 839   3                      DetInfo.bDetTriggerFlag = FALSE;
+ 840   3                      DetObj_InitTheCCD();
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 15  
+
+ 841   3                      DetInfo.bDetNoiseDelayTime = 0;//Wait data send
+ 842   3                      DetInfo.bDetTimes = DET_CMP_TIMES;
+ 843   3                      DetInfo.bDetState = DET_OBJ_DETECT_INIT;
+ 844   3                  }
+ 845   2      
+ 846   2                  break;
+ 847   2            case DET_OBJ_DETECT_INIT:
+ 848   2                  if(DetInfo.bDetNoiseDelayTime > 0)DetInfo.bDetNoiseDelayTime--;
+ 849   2                  else
+ 850   2                  {
+ 851   3                      DetInfo.bDetState = DET_OBJ_NOISE_SAMPLING;
+ 852   3                  }
+ 853   2                  break;
+ 854   2            case DET_OBJ_NOISE_SAMPLING:
+ 855   2                  DetInfo.bDetWaitTime = DETECT_MAX_SAMPLING;
+ 856   2                  DetObj_ClearTheRawDataBuff();
+ 857   2                  DetObj_ClearTheNoiseBuff();
+ 858   2                              ADC_InitDetect();
+ 859   2                              DetObj_Start();
+ 860   2                              DetInfo.bDetState = DET_OBJ_WAIT_SAMPLING;
+ 861   2                  break;
+ 862   2            case DET_OBJ_WAIT_SAMPLING:
+ 863   2                  if(DetInfo.bDetWaitTime > 0)DetInfo.bDetWaitTime--;
+ 864   2                  else
+ 865   2                  {
+ 866   3                      DetObj_Stop();
+ 867   3                      DetObj_CalSampNoise();
+ 868   3                      DetInfo.bDetState = DET_OBJ_START_DETECT_OBSTACLE;
+ 869   3                  }
+ 870   2                  break;
+ 871   2            case DET_OBJ_START_DETECT_OBSTACLE:
+ 872   2                  DetObj_ClearTheRawDataBuff();
+ 873   2                  DetObj_InitTheEPD();
+ 874   2                  DetObj_SendThe58KhzUltraSonic();/* Need polishing send ultrasonic wave used time*/
+ 875   2                  ADC_InitDetect();
+ 876   2                  DetObj_Start();
+ 877   2                  DetInfo.bDetWaitTime = DETECT_MAX_DISTANCE_150CM;
+ 878   2                  CmpData.EPD[CmpData.bCurBfNumber].wDetTime = DetInfo.wDetRealTime;
+ 879   2      
+ 880   2                  DetInfo.bDetState = DET_OBJ_WAIT_ECHO;
+ 881   2                  break;
+ 882   2            case DET_OBJ_WAIT_ECHO:
+ 883   2                  if(DetInfo.bDetWaitTime > 0)DetInfo.bDetWaitTime--;
+ 884   2                  else
+ 885   2                  {
+ 886   3                      DetObj_Stop();
+ 887   3                      DetObj_RawEchoDataAns();
+ 888   3                      DetInfo.bDetState = DET_OBJ_HANDLE_NOISE;
+ 889   3                  }
+ 890   2                  break;
+ 891   2            case DET_OBJ_HANDLE_NOISE:
+ 892   2                  DetObj_DiagnosticTheRingTime();
+ 893   2                  /*  Much disturb keep befor status arithmetic */
+ 894   2                  if(
+ 895   2                      CmpData.Ns[CmpData.bCurBfNumber].eObsNsType == OBS_RED ||
+ 896   2                        (
+ 897   2                        CmpData.Ns[CmpData.bCurBfNumber].bEchoRaisedTimes >= 22
+ 898   2                    ||  CmpData.Ns[CmpData.bCurBfNumber].bNoiseRaisedTimes>= 3
+ 899   2                    ||  CmpData.Ns[CmpData.bCurBfNumber].dObsIntegralArea >= ((DWORD)75*DETECT_MAX_DISTANCE_150C
+             -M*1000/COUNT_TIME_UNIT)
+ 900   2                    ||  CmpData.Ns[CmpData.bCurBfNumber].dNseIntegralArea >= ((DWORD)20*DETECT_MAX_NOISE_TIME*10
+             -00/COUNT_TIME_UNIT)
+ 901   2                        )
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 16  
+
+ 902   2                     )
+ 903   2                  {
+ 904   3                      DetInfo.bDetTimes = 0;
+ 905   3                      DetObj_HoldTheObstaclestate();
+ 906   3                      CmpData.Ns[CmpData.bCurBfNumber].bNoiseMuchFlag = TRUE;
+ 907   3                  }
+ 908   2                  else
+ 909   2                  {
+ 910   3                      DetObj_CompareTheData();
+ 911   3                  }
+ 912   2                  DetInfo.bDetState = DET_OBJ_GENERATE_RETURN;
+ 913   2                  break;
+ 914   2            case DET_OBJ_GENERATE_RETURN:
+ 915   2                  DetObj_ProcessTheRingTime();
+ 916   2                  if(bSensorCheckFlag == TRUE)DetInfo.bDetTimes++;
+ 917   2                  if(DetInfo.bDetTimes > 0)
+ 918   2                  {
+ 919   3                      DetInfo.bDetTimes --;
+ 920   3                      DetInfo.bDetNoiseDelayTime = DetectInterval[DetInfo.wDetRealTime%INTERVAL_LEN];
+ 921   3                      CmpData.bCurBfNumber = (CmpData.bCurBfNumber+1)%DETECT_CMP_BUFFER_LENGTH;
+ 922   3                      DetInfo.bDetState = DET_OBJ_DETECT_INIT;
+ 923   3                  }
+ 924   2                  else
+ 925   2                  {
+ 926   3                      DetObj_GenerateTheNearestObstacle();
+ 927   3                      DetInfo.bDetState = WAIT_DET_CMD;
+ 928   3                      if(DetInfo.bID == ID_MASTER)
+ 929   3                      {
+ 930   4                              Cmd.CmdStatus = MST_CUT_SNR;
+ 931   4                      }
+ 932   3                      else
+ 933   3                      {
+ 934   4                              if(Cmd.CmdStatus == SLV_CALIBRATION_BACK)  //workfrock command
+ 935   4                              {
+ 936   5                                      Cmd.CmdStatus = SLV_CALIBRATION_BACK;
+ 937   5                              }
+ 938   4                              else//detect
+ 939   4                              {
+ 940   5                                      Cmd.CmdStatus = SLV_DISTANCE_BACK;
+ 941   5                              }
+ 942   4                      }
+ 943   3                  }
+ 944   2                  break;
+ 945   2            default:
+ 946   2                  DetInfo.bDetState = DET_OBJ_DETECT_INIT;
+ 947   2                  break;
+ 948   2          }
+ 949   1      }
+ 950          
+ 951          void DetObj_HoldTheObstaclestate(void)
+ 952          {
+ 953   1          BYTE xdata i;
+ 954   1          CmpData.bFirstDataFlag = FALSE;
+ 955   1          NearestData.bRingTimeBounceFlag = FALSE;
+ 956   1          CmpData.EPD[CmpData.bCurBfNumber].bDataNum = 1;
+ 957   1          NearestData.wUpdataDelay = DETECT_DELAY_UPDATE_HIGH;
+ 958   1          CmpData.CCD.wRingTime = NearestData.wRingTime;
+ 959   1          DiagInfo.bKeepFlag = TRUE;
+ 960   1          CmpData.CCD.bObsDistance[0] = NearestData.bEachNearestDistance[DetInfo.bID];
+ 961   1          for(i=1; i<OBJ_NUM; i++)
+ 962   1          {
+ 963   2              CmpData.CCD.bObsDistance[i] = NO_OBJ;
+ 964   2          }
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 17  
+
+ 965   1      }
+ 966          
+ 967          /*********************************************************************************************************
+             -************
+ 968          ** Generate the nearest obstacle.
+ 969          **********************************************************************************************************
+             -***********/
+ 970          void DetObj_GenerateTheNearestObstacle(void)
+ 971          {
+ 972   1          BYTE xdata i,bDis,bDiff;
+ 973   1          BYTE bFrockDis;
+ 974   1      
+ 975   1          /* Frock data */
+ 976   1          bFrockDis = 0xFF;
+ 977   1          for(i=0;i<CmpData.CCD.bDataNum;i++)
+ 978   1          {
+ 979   2              if(bFrockDis > CmpData.CCD.bObsDistance[i])
+ 980   2              {
+ 981   3                      bFrockDis= CmpData.CCD.bObsDistance[i];
+ 982   3              }
+ 983   2          }
+ 984   1          ClrtData.bDistance = bFrockDis;
+ 985   1      
+ 986   1      
+ 987   1          /* Get the nearest obstacle of this time detected. */
+ 988   1          bDis = NO_OBJ;
+ 989   1          for(i=0;i<CmpData.CCD.bDataNum;i++)
+ 990   1          {
+ 991   2              if(CmpData.CCD.bObsDistance[i] > EachSNMaxDistance[DetInfo.bID])
+ 992   2              {
+ 993   3                  CmpData.CCD.bObsDistance[i] = NO_OBJ;
+ 994   3              }
+ 995   2          }
+ 996   1      
+ 997   1          for(i=0;i<CmpData.CCD.bDataNum;i++)
+ 998   1          {
+ 999   2              if(bDis > CmpData.CCD.bObsDistance[i])
+1000   2              {
+1001   3                  bDis = CmpData.CCD.bObsDistance[i];
+1002   3              }
+1003   2          }
+1004   1          /* use for Continue alarming to ring time is solder projection*/
+1005   1          if(bDis < 25)
+1006   1          {
+1007   2              if(bDis > 20)
+1008   2              {
+1009   3                  bDis -= 3;
+1010   3              }
+1011   2              else /* ring time break */
+1012   2              {
+1013   3                  if(  (bDis != OBSTACLE_IN_RING_TIME_VALUE)
+1014   3                     &&(bDis != OBSTACLE_IN_CONTINUOUS_DISTANCE_DELAY)
+1015   3                     &&(bDis != OBSTACLE_IN_CONTINUOUS))
+1016   3                  {
+1017   4                      /* hold the state */
+1018   4                      bDis = NearestData.bEachNearestDistance[DetInfo.bID];
+1019   4                  }
+1020   3              }
+1021   2          }
+1022   1      
+1023   1          if(bDis > MAX_DETECT_DISTANCE)
+1024   1          {
+1025   2              if(NearestData.wUpdataDelay == 0)
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 18  
+
+1026   2              {
+1027   3                  NearestData.bEachNearestDistance[DetInfo.bID] = NO_OBJ;
+1028   3              }
+1029   2          }
+1030   1          else
+1031   1          {
+1032   2              if(bDis < CONTINUOUS_CHIME_DISTANCE)
+1033   2              {
+1034   3                  if(bDis < 25)
+1035   3                      NearestData.bEachNearestDistance[DetInfo.bID] = OBSTACLE_IN_CONTINUOUS;
+1036   3                  else
+1037   3                      NearestData.bEachNearestDistance[DetInfo.bID] = bDis;
+1038   3                  NearestData.wUpdataDelay = DETECT_DELAY_UPDATE_HIGH;
+1039   3              }
+1040   2              else if(bDis < MID_DETECT_DISTANCE)
+1041   2              {
+1042   3                  NearestData.bEachNearestDistance[DetInfo.bID] = bDis;
+1043   3                  NearestData.wUpdataDelay= DETECT_DELAY_UPDATE_LOW;
+1044   3              }
+1045   2              else
+1046   2              {
+1047   3                  NearestData.bEachNearestDistance[DetInfo.bID] = bDis;
+1048   3                  NearestData.wUpdataDelay= DETECT_DELAY_UPDATE_LOW;
+1049   3              }
+1050   2          }
+1051   1      
+1052   1          /* Get the nearest obstacle of all the sensor detected. */
+1053   1          bDis = NO_OBJ;
+1054   1          for(i=0;i<SN_NUM;i++)
+1055   1          {
+1056   2              if(bDis > NearestData.bEachNearestDistance[i])
+1057   2              {
+1058   3                  bDis = NearestData.bEachNearestDistance[i];
+1059   3              }
+1060   2          }
+1061   1          /* Compare the distance to judge if the obstacle has been moved. */
+1062   1          if(bDis > NearestData.bNearestDistance)
+1063   1          {
+1064   2              /* The obstacle move far away from the vehicle. */
+1065   2              /* Compute the difference. */
+1066   2              bDiff = bDis - NearestData.bNearestDistance;
+1067   2              if(bDiff > OBSTACLE_MOVE_FAR_AWAY)
+1068   2              {
+1069   3                  /* Need to change the distance display. */
+1070   3                  NearestData.bNearestDistance = bDis;
+1071   3              }
+1072   2          }
+1073   1          else
+1074   1          {
+1075   2              /* The obstacle move close to the vehicle. */
+1076   2              bDiff = NearestData.bNearestDistance - bDis;
+1077   2              if(bDiff > OBSTACLE_MOVE_CLOSE)
+1078   2              {
+1079   3                  /* Need to change the distance display. */
+1080   3                  NearestData.bNearestDistance = bDis;
+1081   3              }
+1082   2          }
+1083   1      
+1084   1      
+1085   1      }
+1086          
+1087          
+1088          /*********************************************************************************************************
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 19  
+
+             -************
+1089          ** Process the ring time.
+1090          **********************************************************************************************************
+             -***********/
+1091          void DetObj_ProcessTheRingTime(void)
+1092          {
+1093   1           WORD xdata wRingTimeDiff;
+1094   1      
+1095   1          if(CmpData.Ns[CmpData.bCurBfNumber].bNoiseMuchFlag == TRUE)return;
+1096   1          if(CmpData.CCD.wRingTime == 0xFFFF)return; /* Current sensor is failure */
+1097   1      
+1098   1          if(NearestData.bRingTimeBounceFlag == FALSE)
+1099   1          {
+1100   2              if(CmpData.CCD.wRingTime > NearestData.wRingTime)
+1101   2              {
+1102   3                  /* Compute the difference between the ring time saved and this time detected. */
+1103   3                  wRingTimeDiff = CmpData.CCD.wRingTime - NearestData.wRingTime;
+1104   3                  if(wRingTimeDiff > RING_TIME_CHANGE_THRESHOLD)
+1105   3                  {
+1106   4                      if(CmpData.CCD.wRingTime > RING_TIME_MAX_VALUE)
+1107   4                      {
+1108   5                          CmpData.CCD.bObsDistance[0] = OBSTACLE_IN_RING_TIME_VALUE;
+1109   5                          if(CmpData.CCD.bDataNum < OBJ_NUM)
+1110   5                          {
+1111   6                              CmpData.CCD.bDataNum++;
+1112   6                          }
+1113   5                      }
+1114   4                      else
+1115   4                      {
+1116   5                          if(wRingTimeDiff > OBSTALE_IN_RING_TIME_THRESHOLD)
+1117   5                          {
+1118   6                              CmpData.CCD.bObsDistance[0] = OBSTACLE_IN_RING_TIME_VALUE;
+1119   6                              if(CmpData.CCD.bDataNum < OBJ_NUM)
+1120   6                              {
+1121   7                                  CmpData.CCD.bDataNum++;
+1122   7                              }
+1123   6                          }
+1124   5                          else
+1125   5                          {
+1126   6                              CmpData.CCD.bObsDistance[0] = NearestData.bEachNearestDistance[DetInfo.bID];
+1127   6                              if(CmpData.CCD.bDataNum == 0 )
+1128   6                              {
+1129   7                                  CmpData.CCD.bDataNum ++;
+1130   7                              }
+1131   6                          }
+1132   5                      }
+1133   4                  }
+1134   3              }
+1135   2              else
+1136   2              {
+1137   3              }
+1138   2          }
+1139   1      }
+1140          
+1141          
+1142          /*********************************************************************************************************
+             -************
+1143          ** Compare the obstacle received after sending two times of the ultrasonic.
+1144          **********************************************************************************************************
+             -***********/
+1145          void DetObj_CompareTheData(void)
+1146          {
+1147   1          WORD  xdata RingTimeDiff;
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 20  
+
+1148   1          BYTE  xdata DistanceDiff;
+1149   1          BYTE  xdata bObsDistance[OBJ_NUM];
+1150   1          BYTE  xdata bEPDObsDistance[OBJ_NUM];
+1151   1          BYTE  xdata k = 0;
+1152   1          BYTE  xdata i,j;
+1153   1      
+1154   1          if(CmpData.bFirstDataFlag == TRUE)
+1155   1          {
+1156   2              CmpData.bFirstDataFlag = FALSE;
+1157   2              /* Save the data first time received. */
+1158   2              j = 0;
+1159   2              for(i=0;i<CmpData.EPD[CmpData.bCurBfNumber].bDataNum;i++)
+1160   2              {
+1161   3                  if(CmpData.EPD[CmpData.bCurBfNumber].bObsDistance[i] != NO_OBJ)
+1162   3                  {
+1163   4                      CmpData.CCD.bObsDistance[j] = CmpData.EPD[CmpData.bCurBfNumber].bObsDistance[i];
+1164   4                      j++;
+1165   4                  }
+1166   3              }
+1167   2              CmpData.CCD.bDataNum = j;
+1168   2              CmpData.CCD.wRingTime = CmpData.EPD[CmpData.bCurBfNumber].wRingTime;
+1169   2      
+1170   2              if(NearestData.bRingTimeFlag == 0)
+1171   2              {
+1172   3                  if(CmpData.CCD.bDataNum ==0)
+1173   3                  {
+1174   4                      if(CmpData.EPD[CmpData.bCurBfNumber].wRingTime < (NearestData.wRingTime + RENEW_RING_TIME_
+             -THRESHOLD))
+1175   4                      {
+1176   5                          DetInfo.bDetTimes = 0;/*exit*/
+1177   5                      }
+1178   4                  }
+1179   3              }
+1180   2          }
+1181   1          else
+1182   1          {
+1183   2              /* Compare the ring time. */
+1184   2              if(CmpData.EPD[CmpData.bCurBfNumber].wRingTime > CmpData.CCD.wRingTime)
+1185   2              {
+1186   3                  RingTimeDiff = CmpData.EPD[CmpData.bCurBfNumber].wRingTime - CmpData.CCD.wRingTime;
+1187   3              }
+1188   2              else
+1189   2              {
+1190   3                  RingTimeDiff = CmpData.CCD.wRingTime - CmpData.EPD[CmpData.bCurBfNumber].wRingTime;
+1191   3              }
+1192   2              if(RingTimeDiff < RENEW_RING_TIME_THRESHOLD)/*if the value is so small maybe inferrence the EMC*/
+1193   2              {
+1194   3                  NearestData.bRingTimeBounceFlag = FALSE;
+1195   3                  CmpData.CCD.wRingTime = CmpData.EPD[CmpData.bCurBfNumber].wRingTime;
+1196   3              }
+1197   2              else
+1198   2              {
+1199   3                  /* hold the distance */
+1200   3                  CmpData.CCD.bObsDistance[0] = NearestData.bEachNearestDistance[DetInfo.bID];
+1201   3                  if(CmpData.CCD.bDataNum < OBJ_NUM)
+1202   3                  {
+1203   4                      CmpData.CCD.bDataNum++;
+1204   4                  }
+1205   3                  NearestData.bRingTimeBounceFlag = TRUE;
+1206   3                  return; /* return; keep distance, dont compare data, Possible loss of distance*/
+1207   3              }
+1208   2      
+1209   2              for(i=0; i<OBJ_NUM; i++)
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 21  
+
+1210   2              {
+1211   3                  bEPDObsDistance[i] = CmpData.EPD[CmpData.bCurBfNumber].bObsDistance[i];
+1212   3              }
+1213   2              k = 0;
+1214   2              for(i=0;i<CmpData.CCD.bDataNum;i++)
+1215   2              {
+1216   3                  for(j=0;j<CmpData.EPD[CmpData.bCurBfNumber].bDataNum;j++)
+1217   3                  {
+1218   4                      if(bEPDObsDistance[j] != NO_OBJ)
+1219   4                      {
+1220   5                          /* Compute the difference */
+1221   5                          if(CmpData.CCD.bObsDistance[i] > bEPDObsDistance[j])
+1222   5                          {
+1223   6                              DistanceDiff = CmpData.CCD.bObsDistance[i] - bEPDObsDistance[j];
+1224   6                          } else {
+1225   6                              DistanceDiff = bEPDObsDistance[j] - CmpData.CCD.bObsDistance[i];
+1226   6                          }
+1227   5                          if(DistanceDiff < COMPARE_DIFFERENCE)
+1228   5                          {
+1229   6                              /* The data is valid. */
+1230   6                              bObsDistance[k] = bEPDObsDistance[j];
+1231   6                              bEPDObsDistance[j] = NO_OBJ;
+1232   6                              k++;
+1233   6                          }
+1234   5                      }
+1235   4                  }
+1236   3              }
+1237   2      
+1238   2              /* Save the data to buff. */
+1239   2              for(i=0;i<k;i++)
+1240   2              {
+1241   3                  CmpData.CCD.bObsDistance[i] = bObsDistance[i];
+1242   3              }
+1243   2              CmpData.CCD.bDataNum = k;
+1244   2      
+1245   2              if(CmpData.CCD.bDataNum == 0 &&
+1246   2                 CmpData.CCD.wRingTime < (NearestData.wRingTime + RING_TIME_CHANGE_THRESHOLD))
+1247   2              {
+1248   3                  /* Change to next sensor. */
+1249   3                  DetInfo.bDetTimes = 0;
+1250   3              }
+1251   2          }
+1252   1      
+1253   1      #ifdef RINGTIME_RENEW
+                  static BYTE  xdata RingTimeCnt = 0;
+                  static DWORD xdata RingTimeBuffer = 0;
+              
+                  if(RingTimeCnt < 16)
+                  {
+                      RingTimeCnt++;
+                      RingTimeBuffer += CmpData.EPD[CmpData.bCurBfNumber].wRingTime;
+                  }
+                  else
+                  {
+                      RingTimeBuffer >>= 4;
+                      if(RingTimeBuffer < NearestData.wRingTime)
+                          NearestData.wRingTime  = RingTimeBuffer;
+                      RingTimeBuffer = 0;
+                      RingTimeCnt = 0;
+                  }
+              #endif
+1271   1      
+1272   1      }
+C51 COMPILER V9.53.0.0   DETECTOBJ                                                         08/11/2020 17:20:44 PAGE 22  
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   5644    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =    552      56
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

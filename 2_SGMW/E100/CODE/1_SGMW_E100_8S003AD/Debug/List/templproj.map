@@ -1,0 +1,743 @@
+###############################################################################
+#                                                                             #
+# IAR ELF Linker V1.41.1.50116 for STM8                 08/Sep/2020  10:54:19 #
+# Copyright 2010-2013 IAR Systems AB.                                         #
+#                                                                             #
+#    Output file  =  C:\WorkSpace\2_SGMW\E100\CODE\1_SGMW_E100_8S003AD\Debug\ #
+#                    Exe\templproj.out                                        #
+#    Map file     =  C:\WorkSpace\2_SGMW\E100\CODE\1_SGMW_E100_8S003AD\Debug\ #
+#                    List\templproj.map                                       #
+#    Command line =  C:\WorkSpace\2_SGMW\E100\CODE\1_SGMW_E100_8S003AD\Debug\ #
+#                    Obj\Adc.o C:\WorkSpace\2_SGMW\E100\CODE\1_SGMW_E100_8S00 #
+#                    3AD\Debug\Obj\Command.o C:\WorkSpace\2_SGMW\E100\CODE\1_ #
+#                    SGMW_E100_8S003AD\Debug\Obj\Cpu.o                        #
+#                    C:\WorkSpace\2_SGMW\E100\CODE\1_SGMW_E100_8S003AD\Debug\ #
+#                    Obj\DetectObj.o C:\WorkSpace\2_SGMW\E100\CODE\1_SGMW_E10 #
+#                    0_8S003AD\Debug\Obj\ReadID.o                             #
+#                    C:\WorkSpace\2_SGMW\E100\CODE\1_SGMW_E100_8S003AD\Debug\ #
+#                    Obj\Serial.o C:\WorkSpace\2_SGMW\E100\CODE\1_SGMW_E100_8 #
+#                    S003AD\Debug\Obj\Speaker.o C:\WorkSpace\2_SGMW\E100\CODE #
+#                    \1_SGMW_E100_8S003AD\Debug\Obj\Timer.o                   #
+#                    C:\WorkSpace\2_SGMW\E100\CODE\1_SGMW_E100_8S003AD\Debug\ #
+#                    Obj\main.o --redirect _Printf=_PrintfFullNoMb            #
+#                    --redirect _Scanf=_ScanfFullNoMb -o                      #
+#                    C:\WorkSpace\2_SGMW\E100\CODE\1_SGMW_E100_8S003AD\Debug\ #
+#                    Exe\templproj.out --map C:\WorkSpace\2_SGMW\E100\CODE\1_ #
+#                    SGMW_E100_8S003AD\Debug\List\templproj.map --config      #
+#                    "C:\Program Files (x86)\IAR Systems\Embedded Workbench   #
+#                    6.5\stm8\config\lnkstm8s003f3.icf" --config_def          #
+#                    _CSTACK_SIZE=0x120 --config_def _HEAP_SIZE=0x120         #
+#                    --entry __iar_program_start --debug_lib                  #
+#                                                                             #
+#                                                                             #
+###############################################################################
+
+*******************************************************************************
+*** RUNTIME MODEL ATTRIBUTES
+***
+
+__SystemLibrary            = DLib
+__code_model               = medium_or_large
+__core                     = stm8
+__data_model               = medium
+__dlib_file_descriptor     = 0
+__dlib_full_locale_support = 0
+__rt_version               = 4
+
+
+*******************************************************************************
+*** PLACEMENT SUMMARY
+***
+
+"A1":  place at start of [0x000000-0x0000ff] { rw section .vregs };
+"A2":  place at end of [0x000000-0x0003ff] { block CSTACK };
+"P2":  place in [from 0x000000 to 0x0003ff] {
+          block HEAP, rw section .far.bss, rw section .far.data,
+          rw section .far.noinit, rw section .far_func.textrw,
+          rw section .huge.bss, rw section .huge.data, rw section .huge.noinit,
+          rw section .huge_func.textrw, rw section .iar.dynexit,
+          rw section .near.bss, rw section .near.data, rw section .near.noinit,
+          rw section .near_func.textrw };
+"A3":  place at start of [0x008000-0x009fff] { block INTVEC };
+"P3":  place in [from 0x008000 to 0x009fff] {
+          ro section .far.data_init, ro section .far_func.textrw_init,
+          ro section .huge.data_init, ro section .huge_func.textrw_init,
+          ro section .iar.init_table, ro section .init_array,
+          ro section .near.data_init, ro section .near.rodata,
+          ro section .near_func.text, ro section .near_func.textrw_init,
+          ro section .tiny.data_init, ro section .tiny.rodata_init };
+"P4":  place in [from 0x008000 to 0x009fff] {
+          ro section .far.rodata, ro section .far_func.text };
+"P5":  place in [from 0x008000 to 0x009fff] {
+          ro section .huge.rodata, ro section .huge_func.text };
+
+  Section            Kind      Address    Size  Object
+  -------            ----      -------    ----  ------
+"A1":                                      0xc
+  .vregs             uninit   0x000000     0xc  vregs.o [4]
+                            - 0x00000c     0xc
+
+"P2", part 1 of 3:                         0x5
+  P2 s0                       0x00000c     0x5  <Init block>
+    .near.data       inited   0x00000c     0x3  Serial.o [1]
+    .near.data       inited   0x00000f     0x1  Speaker.o [1]
+    .near.data       inited   0x000010     0x1  Speaker.o [1]
+                            - 0x000011     0x5
+
+"P2", part 2 of 3:                        0xb0
+  .near.bss          zero     0x000011    0x4d  DetectObj.o [1]
+  .near.bss          zero     0x00005e     0xf  Command.o [1]
+  .near.bss          zero     0x00006d     0xc  DetectObj.o [1]
+  .near.bss          zero     0x000079     0x9  DetectObj.o [1]
+  .near.bss          zero     0x000082     0x9  DetectObj.o [1]
+  .near.bss          zero     0x00008b     0x9  Speaker.o [1]
+  .near.bss          zero     0x000094     0x7  Serial.o [1]
+  .near.bss          zero     0x00009b     0x6  DetectObj.o [1]
+  .near.bss          zero     0x0000a1     0x6  DetectObj.o [1]
+  .near.bss          zero     0x0000a7     0x2  Adc.o [1]
+  .near.bss          zero     0x0000a9     0x2  Adc.o [1]
+  .near.bss          zero     0x0000ab     0x2  ReadID.o [1]
+  .near.bss          zero     0x0000ad     0x2  ReadID.o [1]
+  .near.bss          zero     0x0000af     0x2  ReadID.o [1]
+  .near.bss          zero     0x0000b1     0x2  ReadID.o [1]
+  .near.bss          zero     0x0000b3     0x2  Timer.o [1]
+  .near.bss          zero     0x0000b5     0x2  Timer.o [1]
+  .near.bss          zero     0x0000b7     0x1  Adc.o [1]
+  .near.bss          zero     0x0000b8     0x1  Adc.o [1]
+  .near.bss          zero     0x0000b9     0x1  Command.o [1]
+  .near.bss          zero     0x0000ba     0x1  Command.o [1]
+  .near.bss          zero     0x0000bb     0x1  ReadID.o [1]
+  .near.bss          zero     0x0000bc     0x1  Serial.o [1]
+  .near.bss          zero     0x0000bd     0x1  Serial.o [1]
+  .near.bss          zero     0x0000be     0x1  Timer.o [1]
+  .near.bss          zero     0x0000bf     0x1  Timer.o [1]
+  .near.bss          zero     0x0000c0     0x1  Timer.o [1]
+                            - 0x0000c1    0xb0
+
+"P2", part 3 of 3:                       0x14e
+  .near.bss          zero     0x0000c1   0x14e  DetectObj.o [1]
+                            - 0x00020f   0x14e
+
+"A2":                                    0x120
+  CSTACK                      0x0002e0   0x120  <Block>
+    CSTACK           uninit   0x0002e0   0x120  <Block tail>
+                            - 0x000400   0x120
+
+Absolute sections, part 1 of 27:           0x1
+  .near.noinit       uninit   0x00500a     0x1  DetectObj.o [1]
+                            - 0x00500b     0x1
+
+Absolute sections, part 2 of 27:           0x8
+  .near.noinit       uninit   0x00500c     0x1  Cpu.o [1]
+  .near.noinit       uninit   0x00500d     0x1  Cpu.o [1]
+  .near.noinit       uninit   0x00500e     0x1  Cpu.o [1]
+  .near.noinit       uninit   0x00500f     0x1  Speaker.o [1]
+  .near.noinit       uninit   0x005010     0x1  Serial.o [1]
+  .near.noinit       uninit   0x005011     0x1  Cpu.o [1]
+  .near.noinit       uninit   0x005012     0x1  Cpu.o [1]
+  .near.noinit       uninit   0x005013     0x1  Serial.o [1]
+                            - 0x005014     0x8
+
+Absolute sections, part 3 of 27:           0x1
+  .near.noinit       uninit   0x0050a0     0x1  Cpu.o [1]
+                            - 0x0050a1     0x1
+
+Absolute sections, part 4 of 27:           0x1
+  .near.noinit       uninit   0x0050c1     0x1  Cpu.o [1]
+                            - 0x0050c2     0x1
+
+Absolute sections, part 5 of 27:           0x2
+  .near.noinit       uninit   0x0050c6     0x1  Cpu.o [1]
+  .near.noinit       uninit   0x0050c7     0x1  Cpu.o [1]
+                            - 0x0050c8     0x2
+
+Absolute sections, part 6 of 27:           0x1
+  .near.noinit       uninit   0x0050ca     0x1  Cpu.o [1]
+                            - 0x0050cb     0x1
+
+Absolute sections, part 7 of 27:           0x1
+  .near.noinit       uninit   0x0050e0     0x1  main.o [1]
+                            - 0x0050e1     0x1
+
+Absolute sections, part 8 of 27:           0x1
+  .near.noinit       uninit   0x005250     0x1  Timer.o [1]
+                            - 0x005251     0x1
+
+Absolute sections, part 9 of 27:           0x2
+  .near.noinit       uninit   0x005254     0x1  Timer.o [1]
+  .near.noinit       uninit   0x005255     0x1  Timer.o [1]
+                            - 0x005256     0x2
+
+Absolute sections, part 10 of 27:          0x6
+  .near.noinit       uninit   0x00525e     0x1  Timer.o [1]
+  .near.noinit       uninit   0x00525f     0x1  Timer.o [1]
+  .near.noinit       uninit   0x005260     0x1  Timer.o [1]
+  .near.noinit       uninit   0x005261     0x1  Timer.o [1]
+  .near.noinit       uninit   0x005262     0x1  Timer.o [1]
+  .near.noinit       uninit   0x005263     0x1  Timer.o [1]
+                            - 0x005264     0x6
+
+Absolute sections, part 11 of 27:          0x1
+  .near.noinit       uninit   0x005300     0x1  Timer.o [1]
+                            - 0x005301     0x1
+
+Absolute sections, part 12 of 27:          0x2
+  .near.noinit       uninit   0x005303     0x1  Timer.o [1]
+  .near.noinit       uninit   0x005304     0x1  Timer.o [1]
+                            - 0x005305     0x2
+
+Absolute sections, part 13 of 27:          0x3
+  .near.noinit       uninit   0x00530c     0x1  Timer.o [1]
+  .near.noinit       uninit   0x00530d     0x1  Timer.o [1]
+  .near.noinit       uninit   0x00530e     0x1  Timer.o [1]
+                            - 0x00530f     0x3
+
+Absolute sections, part 14 of 27:          0x1
+  .near.noinit       uninit   0x005340     0x1  Timer.o [1]
+                            - 0x005341     0x1
+
+Absolute sections, part 15 of 27:          0x2
+  .near.noinit       uninit   0x005343     0x1  Timer.o [1]
+  .near.noinit       uninit   0x005344     0x1  Timer.o [1]
+                            - 0x005345     0x2
+
+Absolute sections, part 16 of 27:          0x2
+  .near.noinit       uninit   0x005347     0x1  Timer.o [1]
+  .near.noinit       uninit   0x005348     0x1  Timer.o [1]
+                            - 0x005349     0x2
+
+Absolute sections, part 17 of 27:          0x1
+  .near.noinit       uninit   0x0053e0     0x1  Adc.o [1]
+                            - 0x0053e1     0x1
+
+Absolute sections, part 18 of 27:          0x1
+  .near.noinit       uninit   0x0053e2     0x1  Adc.o [1]
+                            - 0x0053e3     0x1
+
+Absolute sections, part 19 of 27:          0x1
+  .near.noinit       uninit   0x0053e4     0x1  Adc.o [1]
+                            - 0x0053e5     0x1
+
+Absolute sections, part 20 of 27:          0x1
+  .near.noinit       uninit   0x0053e6     0x1  Adc.o [1]
+                            - 0x0053e7     0x1
+
+Absolute sections, part 21 of 27:          0x1
+  .near.noinit       uninit   0x0053e8     0x1  Adc.o [1]
+                            - 0x0053e9     0x1
+
+Absolute sections, part 22 of 27:          0x1
+  .near.noinit       uninit   0x0053ea     0x1  Adc.o [1]
+                            - 0x0053eb     0x1
+
+Absolute sections, part 23 of 27:          0x1
+  .near.noinit       uninit   0x0053ec     0x1  Adc.o [1]
+                            - 0x0053ed     0x1
+
+Absolute sections, part 24 of 27:          0x1
+  .near.noinit       uninit   0x0053ee     0x1  Adc.o [1]
+                            - 0x0053ef     0x1
+
+Absolute sections, part 25 of 27:          0x8
+  .near.noinit       uninit   0x005400     0x1  ReadID.o [1]
+  .near.noinit       uninit   0x005401     0x1  Adc.o [1]
+  .near.noinit       uninit   0x005402     0x1  Adc.o [1]
+  .near.noinit       uninit   0x005403     0x1  Adc.o [1]
+  .near.noinit       uninit   0x005404     0x1  Adc.o [1]
+  .near.noinit       uninit   0x005405     0x1  Adc.o [1]
+  .near.noinit       uninit   0x005406     0x1  Adc.o [1]
+  .near.noinit       uninit   0x005407     0x1  Adc.o [1]
+                            - 0x005408     0x8
+
+Absolute sections, part 26 of 27:          0x2
+  .near.noinit       uninit   0x00540e     0x1  Adc.o [1]
+  .near.noinit       uninit   0x00540f     0x1  Adc.o [1]
+                            - 0x005410     0x2
+
+Absolute sections, part 27 of 27:          0x6
+  .near.noinit       uninit   0x007f70     0x1  Cpu.o [1]
+  .near.noinit       uninit   0x007f71     0x1  Cpu.o [1]
+  .near.noinit       uninit   0x007f72     0x1  Cpu.o [1]
+  .near.noinit       uninit   0x007f73     0x1  Cpu.o [1]
+  .near.noinit       uninit   0x007f74     0x1  Cpu.o [1]
+  .near.noinit       uninit   0x007f75     0x1  Cpu.o [1]
+                            - 0x007f76     0x6
+
+"A3":                                     0x80
+  INTVEC                      0x008000    0x80  <Block>
+    .intvec          const    0x008000    0x80  interrupt.o [4]
+                            - 0x008080    0x80
+
+"P3":                                     0x61
+  .near.rodata       const    0x008080    0x28  DetectObj.o [1]
+  .iar.init_table    const    0x0080a8    0x18  - Linker created -
+  .near.rodata       const    0x0080c0    0x14  DetectObj.o [1]
+  .near.rodata       const    0x0080d4     0x6  DetectObj.o [1]
+  .near.rodata       const    0x0080da     0x2  DetectObj.o [1]
+  Initializer bytes  ro data  0x0080dc     0x5  <for P2 s0>
+                            - 0x0080e1    0x61
+
+"P4":                                    0x367
+  .far_func.text     ro code  0x0080e1   0x160  long.o [4]
+  .far_func.text     ro code  0x008241    0xaf  vreg_util.o [4]
+  .far_func.text     ro code  0x0082f0    0x2e  short.o [4]
+  .far_func.text     ro code  0x00831e    0x2c  dc_util.o [4]
+  .far_func.text     ro code  0x00834a    0x2a  far_util.o [4]
+  .far_func.text     ro code  0x008374    0x28  long_util.o [4]
+  .far_func.text     ro code  0x00839c    0x28  init_small.o [4]
+  .far_func.text     ro code  0x0083c4    0x1e  init.o [4]
+  .far_func.text     ro code  0x0083e2    0x1e  init_small.o [4]
+  .far_func.text     ro code  0x008400    0x17  cstartup.o [4]
+  .far_func.text     ro code  0x008417    0x16  __dbg_xxexit.o [3]
+  .far_func.text     ro code  0x00842d     0x6  char.o [4]
+  .far_func.text     ro code  0x008433     0x6  cexit.o [4]
+  .far_func.text     ro code  0x008439     0x4  interrupt.o [4]
+  .far_func.text     ro code  0x00843d     0x4  exit.o [4]
+  .far_func.text     ro code  0x008441     0x3  low_level_init.o [4]
+  .far_func.text     ro code  0x008444     0x3  unhandled_exception.o [4]
+  .far_func.text     ro code  0x008447     0x1  __dbg_break.o [3]
+                            - 0x008448   0x367
+
+"P5":                                   0x1a0d
+  .huge_func.text    ro code  0x008448   0x4b5  DetectObj.o [1]
+  .huge_func.text    ro code  0x0088fd   0x2a5  Command.o [1]
+  .huge_func.text    ro code  0x008ba2   0x1fb  DetectObj.o [1]
+  .huge_func.text    ro code  0x008d9d   0x1cc  DetectObj.o [1]
+  .huge_func.text    ro code  0x008f69   0x15d  DetectObj.o [1]
+  .huge_func.text    ro code  0x0090c6    0xfc  DetectObj.o [1]
+  .huge_func.text    ro code  0x0091c2    0xed  DetectObj.o [1]
+  .huge_func.text    ro code  0x0092af    0xc6  Speaker.o [1]
+  .huge_func.text    ro code  0x009375    0xc2  Serial.o [1]
+  .huge_func.text    ro code  0x009437    0xba  main.o [1]
+  .huge_func.text    ro code  0x0094f1    0xad  Serial.o [1]
+  .huge_func.text    ro code  0x00959e    0x97  Adc.o [1]
+  .huge_func.text    ro code  0x009635    0x93  Command.o [1]
+  .huge_func.text    ro code  0x0096c8    0x85  Cpu.o [1]
+  .huge_func.text    ro code  0x00974d    0x82  DetectObj.o [1]
+  .huge_func.text    ro code  0x0097cf    0x6f  DetectObj.o [1]
+  .huge_func.text    ro code  0x00983e    0x67  Serial.o [1]
+  .huge_func.text    ro code  0x0098a5    0x64  Serial.o [1]
+  .huge_func.text    ro code  0x009909    0x63  DetectObj.o [1]
+  .huge_func.text    ro code  0x00996c    0x5a  ReadID.o [1]
+  .huge_func.text    ro code  0x0099c6    0x5a  Speaker.o [1]
+  .huge_func.text    ro code  0x009a20    0x50  Adc.o [1]
+  .huge_func.text    ro code  0x009a70    0x4c  Command.o [1]
+  .huge_func.text    ro code  0x009abc    0x4b  Command.o [1]
+  .huge_func.text    ro code  0x009b07    0x49  Command.o [1]
+  .huge_func.text    ro code  0x009b50    0x34  Speaker.o [1]
+  .huge_func.text    ro code  0x009b84    0x33  Timer.o [1]
+  .huge_func.text    ro code  0x009bb7    0x32  ReadID.o [1]
+  .huge_func.text    ro code  0x009be9    0x2f  Adc.o [1]
+  .huge_func.text    ro code  0x009c18    0x29  Timer.o [1]
+  .huge_func.text    ro code  0x009c41    0x29  Timer.o [1]
+  .huge_func.text    ro code  0x009c6a    0x26  DetectObj.o [1]
+  .huge_func.text    ro code  0x009c90    0x25  Adc.o [1]
+  .huge_func.text    ro code  0x009cb5    0x25  Command.o [1]
+  .huge_func.text    ro code  0x009cda    0x25  DetectObj.o [1]
+  .huge_func.text    ro code  0x009cff    0x23  Timer.o [1]
+  .huge_func.text    ro code  0x009d22    0x1a  DetectObj.o [1]
+  .huge_func.text    ro code  0x009d3c    0x1a  Speaker.o [1]
+  .huge_func.text    ro code  0x009d56    0x19  Adc.o [1]
+  .huge_func.text    ro code  0x009d6f    0x19  Cpu.o [1]
+  .huge_func.text    ro code  0x009d88    0x17  Serial.o [1]
+  .huge_func.text    ro code  0x009d9f    0x15  Timer.o [1]
+  .huge_func.text    ro code  0x009db4    0x14  Command.o [1]
+  .huge_func.text    ro code  0x009dc8    0x13  Timer.o [1]
+  .huge_func.text    ro code  0x009ddb    0x11  Cpu.o [1]
+  .huge_func.text    ro code  0x009dec    0x11  Serial.o [1]
+  .huge_func.text    ro code  0x009dfd    0x11  Timer.o [1]
+  .huge_func.text    ro code  0x009e0e    0x11  Timer.o [1]
+  .huge_func.text    ro code  0x009e1f     0xd  Timer.o [1]
+  .huge_func.text    ro code  0x009e2c     0xa  Adc.o [1]
+  .huge_func.text    ro code  0x009e36     0x9  Timer.o [1]
+  .huge_func.text    ro code  0x009e3f     0x5  Adc.o [1]
+  .huge_func.text    ro code  0x009e44     0x5  Speaker.o [1]
+  .huge_func.text    ro code  0x009e49     0x5  Timer.o [1]
+  .huge_func.text    ro code  0x009e4e     0x2  Command.o [1]
+  .huge_func.text    ro code  0x009e50     0x2  Cpu.o [1]
+  .huge_func.text    ro code  0x009e52     0x2  Cpu.o [1]
+  .huge_func.text    ro code  0x009e54     0x1  Command.o [1]
+                            - 0x009e55  0x1a0d
+
+
+*******************************************************************************
+*** INIT TABLE
+***
+
+          Address   Size
+          -------   ----
+Zero (__iar_zero_init2)
+    2 destination ranges, total size 0x1fe:
+          0x000011   0xb0
+          0x0000c1  0x14e
+
+Copy (__iar_copy_init2)
+    1 source range, total size 0x5:
+          0x0080dc    0x5
+    1 destination range, total size 0x5:
+          0x00000c    0x5
+
+
+
+*******************************************************************************
+*** MODULE SUMMARY
+***
+
+    Module                 ro code  ro data  rw data  rw data
+                                                       (abs)
+    ------                 -------  -------  -------  -------
+C:\WorkSpace\2_SGMW\E100\CODE\1_SGMW_E100_8S003AD\Debug\Obj: [1]
+    Adc.o                      355                 6       17
+    Command.o                1 108                17
+    Cpu.o                      179                         16
+    DetectObj.o              3 451       68      453        1
+    ReadID.o                   140                 9        1
+    Serial.o                   610        3       12        2
+    Speaker.o                  371        2       11        1
+    Timer.o                    269                 7       20
+    main.o                     186                          1
+    ---------------------------------------------------------
+    Total:                   6 669       73      515       59
+
+command line: [2]
+    ---------------------------------------------------------
+    Total:
+
+dbgstm8mmd.a: [3]
+    __dbg_break.o                1
+    __dbg_xxexit.o              22
+    ---------------------------------------------------------
+    Total:                      23
+
+dlstm8mmn.a: [4]
+    cexit.o                      6
+    char.o                       6
+    cstartup.o                  23
+    dc_util.o                   44
+    exit.o                       4
+    far_util.o                  42
+    init.o                      30
+    init_small.o                70
+    interrupt.o                  4      128
+    long.o                     352
+    long_util.o                 40
+    low_level_init.o             3
+    short.o                     46
+    unhandled_exception.o        3
+    vreg_util.o                175
+    vregs.o                                       12
+    ---------------------------------------------------------
+    Total:                     848      128       12
+
+    Linker created                       24      288
+-------------------------------------------------------------
+    Grand Total:             7 540      225      815       59
+
+
+*******************************************************************************
+*** ENTRY LIST
+***
+
+Entry                    Address   Size  Type      Object
+-----                    -------   ----  ----      ------
+?add32_l0_l0_0x         0x0080e1         Code  Gb  long.o [4]
+?b0                     0x000000         Data  Gb  vregs.o [4]
+?b1                     0x000001         Data  Gb  vregs.o [4]
+?b10                    0x00000a         Data  Gb  vregs.o [4]
+?b11                    0x00000b         Data  Gb  vregs.o [4]
+?b2                     0x000002         Data  Gb  vregs.o [4]
+?b3                     0x000003         Data  Gb  vregs.o [4]
+?b4                     0x000004         Data  Gb  vregs.o [4]
+?b5                     0x000005         Data  Gb  vregs.o [4]
+?b6                     0x000006         Data  Gb  vregs.o [4]
+?b7                     0x000007         Data  Gb  vregs.o [4]
+?b8                     0x000008         Data  Gb  vregs.o [4]
+?b9                     0x000009         Data  Gb  vregs.o [4]
+?dc32_l1                0x00831e         Code  Gb  dc_util.o [4]
+?e0                     0x000001         Data  Gb  vregs.o [4]
+?e1                     0x000005         Data  Gb  vregs.o [4]
+?e2                     0x000009         Data  Gb  vregs.o [4]
+?epilogue_l2            0x0082d9         Code  Gb  vreg_util.o [4]
+?epilogue_w4            0x0082de         Code  Gb  vreg_util.o [4]
+?l0                     0x000000         Data  Gb  vregs.o [4]
+?l1                     0x000004         Data  Gb  vregs.o [4]
+?l2                     0x000008         Data  Gb  vregs.o [4]
+?load24_0x_e0           0x008366         Code  Gb  far_util.o [4]
+?load24_e0_0x           0x00834a         Code  Gb  far_util.o [4]
+?load24_e1_0x           0x008358         Code  Gb  far_util.o [4]
+?load32_0x_l0           0x008380         Code  Gb  long_util.o [4]
+?load32_0x_l1           0x00838e         Code  Gb  long_util.o [4]
+?load32_l0_0x           0x008374         Code  Gb  long_util.o [4]
+?mov_e0_e1              0x0082e6         Code  Gb  vreg_util.o [4]
+?mov_l0_l1              0x0082e3         Code  Gb  vreg_util.o [4]
+?mov_w1_w3              0x0082e9         Code  Gb  vreg_util.o [4]
+?mul16_x_x_w0           0x0082f0         Code  Gb  short.o [4]
+?mul32_l0_l0_l1         0x0080f9         Code  Gb  long.o [4]
+?or32_l0_l0_0x          0x0081fc         Code  Gb  long.o [4]
+?or32_l0_l0_l1          0x0081f9         Code  Gb  long.o [4]
+?pop_l0                 0x0082ac         Code  Gb  vreg_util.o [4]
+?pop_l1                 0x0082b7         Code  Gb  vreg_util.o [4]
+?pop_l2                 0x0082c2         Code  Gb  vreg_util.o [4]
+?pop_w0                 0x008262         Code  Gb  vreg_util.o [4]
+?pop_w4                 0x008269         Code  Gb  vreg_util.o [4]
+?push_l0                0x00827c         Code  Gb  vreg_util.o [4]
+?push_l1                0x008281         Code  Gb  vreg_util.o [4]
+?push_l2                0x008286         Code  Gb  vreg_util.o [4]
+?push_w0                0x008241         Code  Gb  vreg_util.o [4]
+?push_w4                0x008246         Code  Gb  vreg_util.o [4]
+?sext32_l0_x            0x008236         Code  Gb  long.o [4]
+?sll32_0x_0x_a          0x008217         Code  Gb  long.o [4]
+?sll32_l0_l0_a          0x008214         Code  Gb  long.o [4]
+?smod16_y_x_y           0x00830e         Code  Gb  short.o [4]
+?srl32_0x_0x_a          0x008228         Code  Gb  long.o [4]
+?srl32_l0_l0_a          0x008225         Code  Gb  long.o [4]
+?srl8_a_a_5             0x00842e         Code  Gb  char.o [4]
+?srl8_a_a_6             0x00842d         Code  Gb  char.o [4]
+?ucmp32_c_l0_l1         0x0081ee         Code  Gb  long.o [4]
+?udiv32_l0_l0_dl        0x00817d         Code  Gb  long.o [4]
+?udiv32_l0_l0_l1        0x008181         Code  Gb  long.o [4]
+?umod32_l1_l0_dl        0x008177         Code  Gb  long.o [4]
+?umod32_l1_l0_l1        0x008181         Code  Gb  long.o [4]
+?w0                     0x000000         Data  Gb  vregs.o [4]
+?w1                     0x000002         Data  Gb  vregs.o [4]
+?w2                     0x000004         Data  Gb  vregs.o [4]
+?w3                     0x000006         Data  Gb  vregs.o [4]
+?w4                     0x000008         Data  Gb  vregs.o [4]
+?w5                     0x00000a         Data  Gb  vregs.o [4]
+ADC_Calue               0x009a20   0x50  Code  Gb  Adc.o [1]
+ADC_DB0RH               0x0053e0    0x1  Data  Gb  Adc.o [1]
+ADC_DB1RH               0x0053e2    0x1  Data  Gb  Adc.o [1]
+ADC_DB2RH               0x0053e4    0x1  Data  Gb  Adc.o [1]
+ADC_DB3RH               0x0053e6    0x1  Data  Gb  Adc.o [1]
+ADC_DB4RH               0x0053e8    0x1  Data  Gb  Adc.o [1]
+ADC_DB5RH               0x0053ea    0x1  Data  Gb  Adc.o [1]
+ADC_DB6RH               0x0053ec    0x1  Data  Gb  Adc.o [1]
+ADC_DB7RH               0x0053ee    0x1  Data  Gb  Adc.o [1]
+ADC_DRH                 0x005404    0x1  Data  Gb  Adc.o [1]
+ADC_DRL                 0x005405    0x1  Data  Gb  Adc.o [1]
+ADC_HardwareInit        0x009c90   0x25  Code  Gb  Adc.o [1]
+ADC_ISP                 0x00959e   0x97  Code  Gb  Adc.o [1]
+ADC_InitDetect          0x009d56   0x19  Code  Gb  Adc.o [1]
+ADC_PowerSample         0x009be9   0x2f  Code  Gb  Adc.o [1]
+ADC_Start               0x009e2c    0xa  Code  Gb  Adc.o [1]
+ADC_Stop                0x009e3f    0x5  Code  Gb  Adc.o [1]
+ADC_TDRH                0x005406    0x1  Data  Gb  Adc.o [1]
+ADC_TDRL                0x005407    0x1  Data  Gb  Adc.o [1]
+AnsData                 0x00006d    0xc  Data  Gb  DetectObj.o [1]
+CLK_PCKENR1             0x0050c7    0x1  Data  Gb  Cpu.o [1]
+CLK_PCKENR2             0x0050ca    0x1  Data  Gb  Cpu.o [1]
+CSTACK$$Base            0x0002e0          --   Gb  - Linker created -
+CSTACK$$Limit           0x000400          --   Gb  - Linker created -
+ClrtData                0x0000a1    0x6  Data  Gb  DetectObj.o [1]
+Cmd                     0x00005e    0xf  Data  Gb  Command.o [1]
+Cmd_CarDataCheckSum     0x009abc   0x4b  Code  Gb  Command.o [1]
+Cmd_DetNextSensor       0x009db4   0x14  Code  Gb  Command.o [1]
+Cmd_DetectObj           0x0088fd  0x2a5  Code  Gb  Command.o [1]
+Cmd_NextSensorSelf      0x009cb5   0x25  Code  Gb  Command.o [1]
+Cmd_RenewalVehicleInfo  0x009e4e    0x2  Code  Gb  Command.o [1]
+Cmd_ReturnDataToCar     0x009e54    0x1  Code  Gb  Command.o [1]
+Cmd_ReturnForCmd        0x009635   0x93  Code  Gb  Command.o [1]
+Cmd_Send                0x009a70   0x4c  Code  Gb  Command.o [1]
+Cmd_WorkDataCheckSum    0x009b07   0x49  Code  Gb  Command.o [1]
+CmpData                 0x000011   0x4d  Data  Gb  DetectObj.o [1]
+Cpu_Clk_Init            0x009ddb   0x11  Code  Gb  Cpu.o [1]
+Cpu_DisableInterrupt    0x009e52    0x2  Code  Gb  Cpu.o [1]
+Cpu_EnableInterrupt     0x009e50    0x2  Code  Gb  Cpu.o [1]
+Cpu_InitHardwarePort    0x0096c8   0x85  Code  Gb  Cpu.o [1]
+Cpu_Init_Vect           0x009d6f   0x19  Code  Gb  Cpu.o [1]
+Delay1us                0x009b84   0x33  Code  Gb  Timer.o [1]
+DetInfo                 0x000082    0x9  Data  Gb  DetectObj.o [1]
+DetObj_CalSampNoise     0x0087e3  0x11a  Code  Gb  DetectObj.o [1]
+DetObj_ClearTheNoiseBuff
+                        0x00974d   0x82  Code  Gb  DetectObj.o [1]
+DetObj_ClearTheRawDataBuff
+                        0x0090c6   0x1d  Code  Gb  DetectObj.o [1]
+DetObj_CompareTheData   0x008d9d  0x1cc  Code  Gb  DetectObj.o [1]
+DetObj_CopySamplingBuffer
+                        0x009c6a   0x26  Code  Gb  DetectObj.o [1]
+DetObj_DetTheObj        0x008ba2  0x1fb  Code  Gb  DetectObj.o [1]
+DetObj_DiagnosticTheRingTime
+                        0x008f7d   0x91  Code  Gb  DetectObj.o [1]
+DetObj_DiagnosticTheSensor
+                        0x00900e   0x16  Code  Gb  DetectObj.o [1]
+DetObj_GenerateTheNearestObstacle
+                        0x0091c2   0xed  Code  Gb  DetectObj.o [1]
+DetObj_HoldTheObstaclestate
+                        0x009cda   0x25  Code  Gb  DetectObj.o [1]
+DetObj_InitSelfCheckVar
+                        0x00907f   0x47  Code  Gb  DetectObj.o [1]
+DetObj_InitTheAnalysisData
+                        0x0091bd    0x5  Code  Gb  DetectObj.o [1]
+DetObj_InitTheCCD       0x0090e3   0x50  Code  Gb  DetectObj.o [1]
+DetObj_InitTheEPD       0x009133   0x8a  Code  Gb  DetectObj.o [1]
+DetObj_ProcessTheRingTime
+                        0x009909   0x63  Code  Gb  DetectObj.o [1]
+DetObj_RawEchoDataAns   0x00852b  0x24e  Code  Gb  DetectObj.o [1]
+DetObj_RawFilter        0x008779   0x6a  Code  Gb  DetectObj.o [1]
+DetObj_RawNoiseDataAns  0x008448   0xe3  Code  Gb  DetectObj.o [1]
+DetObj_RealTimeClock    0x009d22   0x1a  Code  Gb  DetectObj.o [1]
+DetObj_SendThe58KhzUltraSonic
+                        0x009024   0x5b  Code  Gb  DetectObj.o [1]
+DetObj_Start            0x008f71    0xc  Code  Gb  DetectObj.o [1]
+DetObj_Stop             0x008f69    0x8  Code  Gb  DetectObj.o [1]
+DetectInterval          0x0080d4    0x6  Data  Gb  DetectObj.o [1]
+DiagInfo                0x00009b    0x6  Data  Gb  DetectObj.o [1]
+DisableInternalCommunicaiton
+                        0x009dec   0x11  Code  Gb  Serial.o [1]
+EachSNMaxDistance       0x0080da    0x2  Data  Gb  DetectObj.o [1]
+EnableInternalCommunicaiton
+                        0x009d88   0x17  Code  Gb  Serial.o [1]
+GetData                 0x0094f1   0xad  Code  Gb  Serial.o [1]
+GetDistance             0x0097cf   0x6f  Code  Gb  DetectObj.o [1]
+GetHeader               0x00983e   0x67  Code  Gb  Serial.o [1]
+ID                      0x0000bb    0x1  Data  Gb  ReadID.o [1]
+ID_GetSensorId          0x009bb7   0x32  Code  Gb  ReadID.o [1]
+ID_PowerSample          0x00996c   0x5a  Code  Gb  ReadID.o [1]
+INTVEC$$Base            0x008000          --   Gb  - Linker created -
+INTVEC$$Limit           0x008080          --   Gb  - Linker created -
+IWDG_KR                 0x0050e0    0x1  Data  Gb  main.o [1]
+NearestData             0x000079    0x9  Data  Gb  DetectObj.o [1]
+PowerValue              0x0000a9    0x2  Data  Gb  Adc.o [1]
+RL_MAX_VALUE            0x0000ad    0x2  Data  Gb  ReadID.o [1]
+RL_MIN_VALUE            0x0000ab    0x2  Data  Gb  ReadID.o [1]
+RR_MAX_VALUE            0x0000b1    0x2  Data  Gb  ReadID.o [1]
+RR_MIN_VALUE            0x0000af    0x2  Data  Gb  ReadID.o [1]
+RawData                 0x0000c1  0x14e  Data  Gb  DetectObj.o [1]
+ReadFlag                0x0000bc    0x1  Data  Lc  Serial.o [1]
+RecBitCnt               0x0000bd    0x1  Data  Lc  Serial.o [1]
+Region$$Table$$Base     0x0080a8          --   Gb  - Linker created -
+Region$$Table$$Limit    0x0080c0          --   Gb  - Linker created -
+SampValue               0x0000a7    0x2  Data  Gb  Adc.o [1]
+SendData                0x009375   0xc2  Code  Gb  Serial.o [1]
+Serial_ISP              0x00000c    0x3  Data  Gb  Serial.o [1]
+Serial_Port_ISP         0x0098a5   0x64  Code  Gb  Serial.o [1]
+SpkInfo                 0x00008b    0x9  Data  Gb  Speaker.o [1]
+Spk_DrvTheSpeaker       0x0092af   0xc6  Code  Gb  Speaker.o [1]
+Spk_InitThePWMModule    0x009e44    0x5  Code  Gb  Speaker.o [1]
+Spk_InitTheVariable     0x009d3c   0x1a  Code  Gb  Speaker.o [1]
+Spk_JudgeThePowerUpChimeType
+                        0x0099c6   0x5a  Code  Gb  Speaker.o [1]
+Spk_PowerUpChime        0x009b50   0x34  Code  Gb  Speaker.o [1]
+Srl                     0x000094    0x7  Data  Gb  Serial.o [1]
+TIM1_ARRH               0x005262    0x1  Data  Gb  Timer.o [1]
+TIM1_ARRL               0x005263    0x1  Data  Gb  Timer.o [1]
+TIM1_CAP_ISP            0x009e36    0x9  Code  Gb  Timer.o [1]
+TIM1_CNTRH              0x00525e    0x1  Data  Gb  Timer.o [1]
+TIM1_CNTRL              0x00525f    0x1  Data  Gb  Timer.o [1]
+TIM1_OVR_ISP            0x009e0e   0x11  Code  Gb  Timer.o [1]
+TIM1_PSCRH              0x005260    0x1  Data  Gb  Timer.o [1]
+TIM1_PSCRL              0x005261    0x1  Data  Gb  Timer.o [1]
+TIM2_CNTRH              0x00530c    0x1  Data  Gb  Timer.o [1]
+TIM2_CNTRL              0x00530d    0x1  Data  Gb  Timer.o [1]
+TIM2_OVR_ISP            0x009e49    0x5  Code  Gb  Timer.o [1]
+TIM4_1MS_ISP            0x009cff   0x23  Code  Gb  Timer.o [1]
+TIM4_ARR                0x005348    0x1  Data  Gb  Timer.o [1]
+TableHeight             0x0080c0   0x14  Data  Gb  DetectObj.o [1]
+TableWidth              0x008080   0x28  Data  Gb  DetectObj.o [1]
+Time_Init1msTimer       0x009dfd   0x11  Code  Gb  Timer.o [1]
+Time_Init32msTimer      0x009c18   0x29  Code  Gb  Timer.o [1]
+Time_InitAdcTriggerTimer
+                        0x009c41   0x29  Code  Gb  Timer.o [1]
+Time_InitTheDelayTimer  0x009dc8   0x13  Code  Gb  Timer.o [1]
+Time_StartAdcTrigger    0x009d9f   0x15  Code  Gb  Timer.o [1]
+Time_StopAdcTrigger     0x009e1f    0xd  Code  Gb  Timer.o [1]
+VechInfo                0x0000b9    0x1  Data  Gb  Command.o [1]
+WorkFlag                0x0000b7    0x1  Data  Gb  Adc.o [1]
+_A_ADC_AWCRH            0x00540e    0x1  Data  Gb  Adc.o [1]
+_A_ADC_AWCRL            0x00540f    0x1  Data  Gb  Adc.o [1]
+_A_ADC_CR1              0x005401    0x1  Data  Gb  Adc.o [1]
+_A_ADC_CR2              0x005402    0x1  Data  Gb  Adc.o [1]
+_A_ADC_CR3              0x005403    0x1  Data  Gb  Adc.o [1]
+_A_ADC_CSR              0x005400    0x1  Data  Gb  ReadID.o [1]
+_A_CLK_CKDIVR           0x0050c6    0x1  Data  Gb  Cpu.o [1]
+_A_CLK_ECKR             0x0050c1    0x1  Data  Gb  Cpu.o [1]
+_A_EXTI_CR1             0x0050a0    0x1  Data  Gb  Cpu.o [1]
+_A_ITC_SPR1             0x007f70    0x1  Data  Gb  Cpu.o [1]
+_A_ITC_SPR2             0x007f71    0x1  Data  Gb  Cpu.o [1]
+_A_ITC_SPR3             0x007f72    0x1  Data  Gb  Cpu.o [1]
+_A_ITC_SPR4             0x007f73    0x1  Data  Gb  Cpu.o [1]
+_A_ITC_SPR5             0x007f74    0x1  Data  Gb  Cpu.o [1]
+_A_ITC_SPR6             0x007f75    0x1  Data  Gb  Cpu.o [1]
+_A_PC_CR1               0x00500d    0x1  Data  Gb  Cpu.o [1]
+_A_PC_CR2               0x00500e    0x1  Data  Gb  Cpu.o [1]
+_A_PC_DDR               0x00500c    0x1  Data  Gb  Cpu.o [1]
+_A_PC_ODR               0x00500a    0x1  Data  Gb  DetectObj.o [1]
+_A_PD_CR1               0x005012    0x1  Data  Gb  Cpu.o [1]
+_A_PD_CR2               0x005013    0x1  Data  Gb  Serial.o [1]
+_A_PD_DDR               0x005011    0x1  Data  Gb  Cpu.o [1]
+_A_PD_IDR               0x005010    0x1  Data  Gb  Serial.o [1]
+_A_PD_ODR               0x00500f    0x1  Data  Gb  Speaker.o [1]
+_A_TIM1_CR1             0x005250    0x1  Data  Gb  Timer.o [1]
+_A_TIM1_IER             0x005254    0x1  Data  Gb  Timer.o [1]
+_A_TIM1_SR1             0x005255    0x1  Data  Gb  Timer.o [1]
+_A_TIM2_CR1             0x005300    0x1  Data  Gb  Timer.o [1]
+_A_TIM2_IER             0x005303    0x1  Data  Gb  Timer.o [1]
+_A_TIM2_PSCR            0x00530e    0x1  Data  Gb  Timer.o [1]
+_A_TIM2_SR1             0x005304    0x1  Data  Gb  Timer.o [1]
+_A_TIM4_CR1             0x005340    0x1  Data  Gb  Timer.o [1]
+_A_TIM4_IER             0x005343    0x1  Data  Gb  Timer.o [1]
+_A_TIM4_PSCR            0x005347    0x1  Data  Gb  Timer.o [1]
+_A_TIM4_SR              0x005344    0x1  Data  Gb  Timer.o [1]
+__DebugBreak            0x008447    0x1  Code  Gb  __dbg_break.o [3]
+__exit                  0x008417   0x16  Code  Gb  __dbg_xxexit.o [3]
+__iar_copy_init2        0x00839c         Code  Gb  init_small.o [4]
+__iar_data_init2        0x0083c4   0x1e  Code  Gb  init.o [4]
+__iar_program_start     0x008400         Code  Gb  cstartup.o [4]
+__iar_unhandled_exception
+                        0x008444         Code  Gb  unhandled_exception.o [4]
+__iar_zero_init2        0x0083e2         Code  Gb  init_small.o [4]
+__intvec                0x008000         Data  Gb  interrupt.o [4]
+__low_level_init        0x008441    0x3  Code  Gb  low_level_init.o [4]
+_exit                   0x008433         Code  Gb  cexit.o [4]
+_interrupt_1            0x008439         Code  Wk  interrupt.o [4]
+_interrupt_10           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_11           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_12           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_13           0x009e0e         Code  Gb  Timer.o [1]
+_interrupt_14           0x009e36         Code  Gb  Timer.o [1]
+_interrupt_15           0x009e49         Code  Gb  Timer.o [1]
+_interrupt_16           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_17           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_18           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_19           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_2            0x008439         Code  Wk  interrupt.o [4]
+_interrupt_20           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_21           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_22           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_23           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_24           0x00959e         Code  Gb  Adc.o [1]
+_interrupt_25           0x009cff         Code  Gb  Timer.o [1]
+_interrupt_26           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_27           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_28           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_29           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_3            0x008439         Code  Wk  interrupt.o [4]
+_interrupt_30           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_31           0x008439         Code  Wk  interrupt.o [4]
+_interrupt_4            0x008439         Code  Wk  interrupt.o [4]
+_interrupt_5            0x008439         Code  Wk  interrupt.o [4]
+_interrupt_6            0x008439         Code  Wk  interrupt.o [4]
+_interrupt_7            0x008439         Code  Wk  interrupt.o [4]
+_interrupt_8            0x0098a5         Code  Gb  Serial.o [1]
+_interrupt_9            0x008439         Code  Wk  interrupt.o [4]
+bCsrBuffer              0x0000b8    0x1  Data  Gb  Adc.o [1]
+bLevel                  0x0000bf    0x1  Data  Gb  Timer.o [1]
+bSensorCheckFlag        0x0000c0    0x1  Data  Gb  Timer.o [1]
+bTimeFlag               0x0000be    0x1  Data  Gb  Timer.o [1]
+exit                    0x00843d    0x4  Code  Gb  exit.o [4]
+main                    0x009437   0xba  Code  Gb  main.o [1]
+wSensorCheckTime        0x0000b5    0x2  Data  Gb  Timer.o [1]
+wTime                   0x0000b3    0x2  Data  Gb  Timer.o [1]
+
+
+[1] = C:\WorkSpace\2_SGMW\E100\CODE\1_SGMW_E100_8S003AD\Debug\Obj
+[2] = command line
+[3] = dbgstm8mmd.a
+[4] = dlstm8mmn.a
+
+  7 540 bytes of readonly  code memory
+    225 bytes of readonly  data memory
+    815 bytes of readwrite data memory (+ 59 absolute)
+
+Errors: none
+Warnings: none

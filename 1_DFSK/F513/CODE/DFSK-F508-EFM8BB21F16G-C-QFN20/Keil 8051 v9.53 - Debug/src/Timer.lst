@@ -1,0 +1,507 @@
+C51 COMPILER V9.60.0.0   TIMER                                                             08/31/2020 09:15:07 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE TIMER
+OBJECT MODULE PLACED IN .\src\Timer.OBJ
+COMPILER INVOKED BY: c:\SiliconLabs\SimplicityStudio\v4\developer\toolchains\keil_8051\9.60\BIN\C51.exe C:\WorkSpace\1_D
+                    -FSK\F508\CODE\DFSK-F508-EFM8BB21F16G-C-QFN20\src\Timer.c OMF2 LARGE DEBUG OBJECTEXTEND ROM(LARGE) WARNINGLEVEL(2) FLOATF
+                    -UZZY(3) OPTIMIZE(8,SPEED) DEFINE(DEBUG=1) INTVECTOR(0X0000) INTPROMOTE INCDIR(C:\WorkSpace\1_DFSK\F508\CODE\DFSK-F508-EF
+                    -M8BB21F16G-C-QFN20\inc;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/shared/si8051base;C:/Silico
+                    -nLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.7//Device/EFM8BB2/inc) PRINT(.\src\Timer.lst) COND PAGEWIDTH(120) PAG
+                    -ELENGTH(65) OBJECT(.\src\Timer.OBJ)
+
+line level    source
+
+   1          /*********************************************************************************************************
+             -************
+   2          ** FILE NAME: Timer.c
+   3          **
+   4          ** PROJECT:  DFSK_F508_RADAR
+   5          ** CPU:      EFM8BB21F16G
+   6          ** COMPILER: SILICON
+   7          ** -------------------------------------------------------------------------------------------------------
+             -------------
+   8          ** VERSION:  V0.1
+   9          ** DATE:     2020.08.06
+  10          **********************************************************************************************************
+             -***********/
+  11          #include "cpu.h"
+  12          #include "Timer.h"
+  13          #include "DetectObj.h"
+  14          #include "Serial.h"
+  15          
+  16          BOOL xdata bTimeFlag;
+  17          BOOL xdata b50msFlag;
+  18          WORD xdata w50msCnt;
+  19          BOOL xdata bLevel;
+  20          WORD xdata wTime;
+  21          BYTE xdata bSensorCheckFlag;
+  22          WORD xdata wSensorCheckTime;
+  23          
+  24          
+  25          /*********************************************************************************************************
+             -************
+  26          ** Init the timer variable
+  27          **********************************************************************************************************
+             -***********/
+  28          void Time_InitVariable(void)
+  29          {
+  30   1              bTimeFlag = 0;
+  31   1              b50msFlag = 0;
+  32   1              w50msCnt  = 0;
+  33   1              bLevel = 0;
+  34   1              wTime = 0;
+  35   1              //bSensorCheckFlag = 0;
+  36   1              //wSensorCheckTime = 0;
+  37   1      }
+  38          
+  39          
+  40          /*********************************************************************************************************
+             -************
+  41          ** Init the PCA0 count
+  42          **********************************************************************************************************
+             -***********/
+  43          void Time_InitPCA0(void)
+  44          {
+C51 COMPILER V9.60.0.0   TIMER                                                             08/31/2020 09:15:07 PAGE 2   
+
+  45   1          SFRPAGE_TEMP = SFRPAGE;
+  46   1          SFRPAGE = 0x00;
+  47   1      
+  48   1              PCA0CN0_CF   = 0; //Clear interrupt flag;
+  49   1              PCA0CN0_CCF0 = 0; //Clear interrupt flag;
+  50   1              PCA0CN0_CCF1 = 0; //Clear interrupt flag;
+  51   1              PCA0CN0_CCF2 = 0; //Clear interrupt flag;
+  52   1      
+  53   1              PCA0MD           = 0x01;/*bit1/2/3 = 000; Set clock is system/12; cnt = 12/49 = 0.2448us;
+  54   1                                                        Measurement max pulse is 16ms
+  55   1                                                        bit0 = 1; Set PCA0 overflow interrupt; CF is enable
+  56   1                                                      */
+  57   1              PCA0PWM          = 0x00;//No use
+  58   1              PCA0CLR          = 0x00;//No use
+  59   1              PCA0POL          = 0x00;//No use
+  60   1              PCA0CENT         = 0x00;//No use
+  61   1              PCA0L            = 0x00;//PCA0 count
+  62   1              PCA0H            = 0x00;//PCA0 count
+  63   1      
+  64   1              PCA0CPM0         = 0xB0;/*bit7 = 1; Set 16 bit count mode
+  65   1                                                        bit6 = 0; Close Comparator function
+  66   1                                                        bit5 = 1; Capture Positive Function Enable
+  67   1                                                        bit4 = 1; Capture Negative Function Enable
+  68   1                                                        bit3 = 0; Match Function disable
+  69   1                                                        bit2 = 0; Toggle Functiondisable
+  70   1                                                        bit1 = 0; Pulse Width Modulation Mode disable
+  71   1                                                        bit0 = 0; Capture/Compare Flag Interrupt Enable
+  72   1                                                      */
+  73   1              PCA0CPM1         = 0xB0;
+  74   1      
+  75   1              PCA0CPM2         = 0x00;//channel not used
+  76   1      
+  77   1              EIE1             = 0x10;//Enable interruput
+  78   1              EIP1            |= 0x10;//11; Set Interrupt Priority; 11 is highest; 00 is lowest;
+  79   1              EIP1H           |= 0x10;
+  80   1              PCA0CN0_CR   = 1;   //Start PCA0;
+  81   1      
+  82   1              SFRPAGE = SFRPAGE_TEMP;
+  83   1      }
+  84          
+  85          void Start_PCA0_Comparator(void)
+  86          {
+  87   1              PCA0      = 0xFFF0;
+  88   1              Serial.bComparatorFlag = TRUE;
+  89   1      }
+  90          void Stop_PCA0_Comparator(void)
+  91          {
+  92   1              DATA_HIGH;
+  93   1              Serial.bComparatorFlag = FALSE;
+  94   1      }
+  95          
+  96          void Start_PCA0_Capture(BYTE CH)
+  97          {
+  98   1          SFRPAGE_TEMP = SFRPAGE;
+  99   1          SFRPAGE = 0x00;
+ 100   1          PCA0CN0_CR   = 0;   //Stop PCA0;
+ 101   1              if(CH == 0)
+ 102   1              {
+ 103   2                      PCA0CPM0 |= 0x31;
+ 104   2              }
+ 105   1              if(CH == 1)
+ 106   1              {
+ 107   2                      PCA0CPM1 |= 0x31;
+C51 COMPILER V9.60.0.0   TIMER                                                             08/31/2020 09:15:07 PAGE 3   
+
+ 108   2              }
+ 109   1              if(CH == 2)
+ 110   1              {
+ 111   2                      PCA0CPM2 |= 0x31;
+ 112   2              }
+ 113   1              PCA0CN0_CR   = 1;   //Start PCA0;
+ 114   1          SFRPAGE = SFRPAGE_TEMP;
+ 115   1      }
+ 116          
+ 117          void Stop_PCA0_Capture(BYTE CH)
+ 118          {
+ 119   1          SFRPAGE_TEMP = SFRPAGE;
+ 120   1          SFRPAGE = 0x00;
+ 121   1          PCA0CN0_CR   = 0;   //Stop PCA0;
+ 122   1              if(CH == 0)
+ 123   1              {
+ 124   2                      PCA0CPM0 &= (~0x31);
+ 125   2              }
+ 126   1              if(CH == 1)
+ 127   1              {
+ 128   2                      PCA0CPM1 &= (~0x31);
+ 129   2              }
+ 130   1              if(CH == 2)
+ 131   1              {
+ 132   2                      PCA0CPM2 &= (~0x31);
+ 133   2              }
+ 134   1              PCA0CN0_CR   = 1;   //Start PCA0;
+ 135   1          SFRPAGE = SFRPAGE_TEMP;
+ 136   1      
+ 137   1         //TEST
+ 138   1      //    SFRPAGE_TEMP = SFRPAGE;
+ 139   1      //    SFRPAGE = 0x00;
+ 140   1      //    PCA0CN0_CR   = 0;   //Stop PCA0;
+ 141   1      //    SFRPAGE = SFRPAGE_TEMP;
+ 142   1      
+ 143   1      }
+ 144          /*********************************************************************************************************
+             -************
+ 145          ** Set the 1ms timer.
+ 146          **********************************************************************************************************
+             -***********/
+ 147          void Time_Init1msTimer(void) //use time 2
+ 148          {
+ 149   1          SFRPAGE_TEMP = SFRPAGE;
+ 150   1          SFRPAGE = 0x00;
+ 151   1      
+ 152   1              TMR2CN0_T2XCLK0 = 0;    //bit0/bit1 = 00; Set clock is system/12; cnt =12/49us=0.2449us;
+ 153   1              TMR2CN0_T2XCLK1 = 0;
+ 154   1              TMR2CN0_TF2CEN  = 0;    //Disable capture
+ 155   1              TMR2CN0_T2SPLIT = 0;    //Set 16 bit mode
+ 156   1              TMR2L                   = 0xFF;
+ 157   1              TMR2H                   = 0xFF;
+ 158   1              TMR2RLL                 = (BYTE)((0xFFFF-4083)>>0);     //Set reload value(1000us £ºcnt = 1000/12*49 = 4083)
+ 159   1              TMR2RLH                 = (BYTE)((0xFFFF-4083)>>8);
+ 160   1              IE_ET2                  = 1;    //Enable interrupt;
+ 161   1              IP                         &= (~0x20); //10; Set Interrupt Priority; 11 is highest; 00 is lowest;
+ 162   1              IPH                        |= ( 0x20);
+ 163   1              TMR2CN0_TR2     = 1;    //Start T2
+ 164   1      
+ 165   1          SFRPAGE = SFRPAGE_TEMP;
+ 166   1      }
+ 167          
+ 168          
+C51 COMPILER V9.60.0.0   TIMER                                                             08/31/2020 09:15:07 PAGE 4   
+
+ 169          /*********************************************************************************************************
+             -************
+ 170          ** Initial the 32ms timer.
+ 171          **********************************************************************************************************
+             -***********/
+ 172          void Time_Init32msTimer(void) //use time 0
+ 173          {
+ 174   1              CKCON0  |= 0x04;        //Timer 0 high byte uses the system clock
+ 175   1              CKCON0  |= 0x02;        //Set Timer0/1 clock is system/48; cnt = 0.98us
+ 176   1              TMOD    &= (~0x04);     //bit3; Set 0 is timer mode;set 1 is count mode
+ 177   1              TMOD    |= 1;           //bit0/bit1; Set 0 is 13 bit;Set 1 is 16 bit; Set 2 is reload 8 bit; Set 3 is two 8 bit;
+ 178   1              TL0              = 0x00;
+ 179   1              TH0              = 0x00;
+ 180   1              IE_ET0   = 0;           //Disable interrupt;
+ 181   1              IP              |= 0x02;    //11; Set Interrupt Priority; 11 is highest; 00 is lowest;
+ 182   1              IPH         |= 0x02;
+ 183   1      
+ 184   1              TCON_TR0 = 0;           //stop T0
+ 185   1      }
+ 186          
+ 187          
+ 188          /*********************************************************************************************************
+             -************
+ 189          ** OPEN the 32ms timer interruput.
+ 190          **********************************************************************************************************
+             -***********/
+ 191          void EnableThe32msTimerInterrupt()
+ 192          {
+ 193   1              TCON_TF0 = 0;           //Clear interrupt flag;
+ 194   1              IE_ET0 = 1;             //Enable interrupt;
+ 195   1      }
+ 196          
+ 197          /*********************************************************************************************************
+             -************
+ 198          ** CLOSE the 32ms timer interruput.
+ 199          **********************************************************************************************************
+             -***********/
+ 200          void DisableThe32msTimerInterrupt()
+ 201          {
+ 202   1              IE_ET0 = 0;             //Disable interrupt;
+ 203   1      }
+ 204          
+ 205          
+ 206          /*********************************************************************************************************
+             -************
+ 207          ** Initial the Uart0 Baud Rate timer.
+ 208          **********************************************************************************************************
+             -***********/
+ 209          void Time_InitUart0Timer(void)  //Timer 1
+ 210          {
+ 211   1              SFRPAGE_TEMP = SFRPAGE;
+ 212   1      //      CKCON0  |= 0x04;        //Timer 0 high byte uses the system clock
+ 213   1      //      CKCON0  |= 0x02;        //Set Timer0/1 clock is system/48; cnt = 0.98us
+ 214   1      
+ 215   1              CKCON0  &= (~0x08);     //Timer 1 high byte uses the SCA clock
+ 216   1              TMOD    &= (~0x40);             //bit3; Set 0 is timer mode;set 1 is count mode
+ 217   1              TMOD    |= 0x20;                //bit0/bit1; Set 0 is 13 bit;Set 1 is 16 bit; Set 2 is reload 8 bit; Set 3 is two 8 bit;
+ 218   1              TMOD    &= (~0x10);
+ 219   1      
+ 220   1              TL1              = 0x96;//0x96;
+ 221   1              TH1              = 0x96;//0x96;
+ 222   1      
+ 223   1              SFRPAGE = 0x10;
+C51 COMPILER V9.60.0.0   TIMER                                                             08/31/2020 09:15:07 PAGE 5   
+
+ 224   1              IE_ET1   = 0;           //Disable interrupt;
+ 225   1              IP              |= 0x08;    //11; Set Interrupt Priority; 11 is highest; 00 is lowest;
+ 226   1              IPH         |= 0x08;
+ 227   1              SFRPAGE = SFRPAGE_TEMP;
+ 228   1      
+ 229   1              TCON_TR1 = 0;           //stop T1
+ 230   1      }
+ 231          
+ 232          void StartTheUart0Timer(void)
+ 233          {
+ 234   1              TCON_TF1 = 0;
+ 235   1              TCON_TR1 = 1;   //start T1
+ 236   1      }
+ 237          
+ 238          void StopTheUart0Timer(void)
+ 239          {
+ 240   1              TCON_TF1 = 0;
+ 241   1              TCON_TR1 = 0;   //stop T1
+ 242   1      
+ 243   1      }
+ 244          
+ 245          
+ 246          void Time_InitTheDelayTimer(void) //time 4
+ 247          {
+ 248   1          SFRPAGE_TEMP = SFRPAGE;
+ 249   1          SFRPAGE = 0x10;
+ 250   1              TMR4CN0_T4XCLK0 = 0;    //bit0/bit1 = 00; Set clock is system/12; cnt =12/49us=0.2449us;
+ 251   1              TMR4CN0_T4XCLK1 = 0;
+ 252   1              TMR4CN0_TF4CEN  = 0;    //Disable capture
+ 253   1              TMR4CN0_T4SPLIT = 0;    //Set 16 bit mode
+ 254   1              TMR4L                   = 0xFF;
+ 255   1              TMR4H                   = 0xFF;
+ 256   1              TMR4RLL                 = 0x00;
+ 257   1              TMR4RLH                 = 0x00;
+ 258   1              EIP2               &= (~0x10);//00; Set Interrupt Priority; 11 is highest; 00 is lowest;
+ 259   1              EIP2H              &= (~0x10);
+ 260   1              EIE2               &= (~0x10); //Disable interrupt;
+ 261   1      
+ 262   1              TMR4CN0_TR4     = 0;    //Stop T3
+ 263   1      
+ 264   1          SFRPAGE = SFRPAGE_TEMP;
+ 265   1      }
+ 266          
+ 267          void Time_InitAdcTriggerTimer(void) //time 3
+ 268          {
+ 269   1          SFRPAGE_TEMP = SFRPAGE;
+ 270   1          SFRPAGE = 0x00;
+ 271   1      
+ 272   1              TMR3CN0 = 0x00; /* bit0/bit1 = 00; Set clock is system/12; cnt =12/49us=0.2449us;
+ 273   1                                                 bit2 = 0; T3 stop
+ 274   1                                                 bit3 = 0; Set 16 bit mode
+ 275   1                                               */
+ 276   1              TMR3L   = 0xFF;
+ 277   1              TMR3H   = 0xFF;
+ 278   1              TMR3RLL = (BYTE)((0xFFFF-((COUNT_TIME_UNIT*49)/12))>>0);        //Set reload value(35us £ºcnt = 35/12*49 = 142)
+ 279   1              TMR3RLH = (BYTE)((0xFFFF-((COUNT_TIME_UNIT*49)/12))>>8);
+ 280   1              EIP1   |= 0x80;         //11; Set Interrupt Priority; 11 is highest; 00 is lowest;
+ 281   1              EIP1H  |= 0x80;
+ 282   1              EIE1   &= (~0x80);//bit8; Disable interrupt
+ 283   1              TMR3CN0&= (~0x04);//Stop T3
+ 284   1      
+ 285   1          SFRPAGE = SFRPAGE_TEMP;
+ 286   1      }
+C51 COMPILER V9.60.0.0   TIMER                                                             08/31/2020 09:15:07 PAGE 6   
+
+ 287          
+ 288          void Time_StartAdcTrigger(void)
+ 289          {
+ 290   1          SFRPAGE_TEMP = SFRPAGE;
+ 291   1          SFRPAGE = 0x00;
+ 292   1      
+ 293   1              TMR3CN0&= (~0x80);      //bit7; Clear interrupt flag
+ 294   1              TMR3L   = 0xFF;
+ 295   1              TMR3H   = 0xFF;
+ 296   1              TMR3CN0|= 0x04;
+ 297   1              EIE1   |= 0x80;         //bit7; Enable interrupt
+ 298   1      
+ 299   1          SFRPAGE = SFRPAGE_TEMP;
+ 300   1      }
+ 301          
+ 302          void Time_StopAdcTrigger(void)
+ 303          {
+ 304   1          SFRPAGE_TEMP = SFRPAGE;
+ 305   1          SFRPAGE = 0x00;
+ 306   1      
+ 307   1              TMR3CN0 &= (~0x04);
+ 308   1              EIE1    &= (~0x80);//bit8; Disable interrupt
+ 309   1      
+ 310   1          SFRPAGE = SFRPAGE_TEMP;
+ 311   1      }
+ 312          
+ 313          void StartThe32msTimer (void)
+ 314          {
+ 315   1          SFRPAGE_TEMP = SFRPAGE;
+ 316   1          SFRPAGE  = 0x00;
+ 317   1      
+ 318   1              TL0              = 0x00;
+ 319   1              TH0              = 0x00;
+ 320   1              TCON_TR0 = 1;   //start T0
+ 321   1      
+ 322   1          SFRPAGE  = SFRPAGE_TEMP;
+ 323   1      }
+ 324          
+ 325          void StopThe32msTimer (void)
+ 326          {
+ 327   1          SFRPAGE_TEMP = SFRPAGE;
+ 328   1          SFRPAGE  = 0x00;
+ 329   1      
+ 330   1              TCON_TR0 = 0;   //stop T0
+ 331   1      
+ 332   1          SFRPAGE  = SFRPAGE_TEMP;
+ 333   1      }
+ 334          
+ 335          void Start1msTimer (void)
+ 336          {
+ 337   1          SFRPAGE_TEMP = SFRPAGE;
+ 338   1          SFRPAGE = 0x00;
+ 339   1              TMR2L   = 0xFF;
+ 340   1              TMR2H   = 0xFF;
+ 341   1              IE_ET2  = 1;            //Start
+ 342   1              TMR2CN0_TR2 = 1;        //Start T2
+ 343   1      
+ 344   1          SFRPAGE = SFRPAGE_TEMP;
+ 345   1      }
+ 346          
+ 347          void Stop1msTimer (void)
+ 348          {
+ 349   1          SFRPAGE_TEMP = SFRPAGE;
+C51 COMPILER V9.60.0.0   TIMER                                                             08/31/2020 09:15:07 PAGE 7   
+
+ 350   1          SFRPAGE = 0x00;
+ 351   1      
+ 352   1              IE_ET2  = 0;            //Stop
+ 353   1              TMR2CN0_TR2 = 0;        //Stop T2
+ 354   1      
+ 355   1          SFRPAGE = SFRPAGE_TEMP;
+ 356   1      }
+ 357          
+ 358          /*********************************************************************************************************
+             -************
+ 359          ** Delay unit:us
+ 360          **********************************************************************************************************
+             -***********/
+ 361          void Delay1us(WORD byTime) //use time 4
+ 362          {
+ 363   1          WORD Temp;
+ 364   1      
+ 365   1          SFRPAGE_TEMP = SFRPAGE;
+ 366   1          SFRPAGE = 0x10;
+ 367   1      
+ 368   1          byTime<<= 2;
+ 369   1          Temp        = 0xFFFF-byTime;
+ 370   1          TMR4L       = (BYTE)(Temp&0x00FF);
+ 371   1          TMR4H       = (BYTE)((Temp&0xFF00)>>8);
+ 372   1              TMR4CN0_TR4 = 1;        //Start T3
+ 373   1          while(TMR4CN0_TF4H == 0)
+ 374   1          {
+ 375   2              CLR_WDT;
+ 376   2          }
+ 377   1          TMR4CN0_TR4 = 0;    //Stop T3
+ 378   1          TMR4CN0_TF4H = 0;
+ 379   1      
+ 380   1          SFRPAGE = SFRPAGE_TEMP;
+ 381   1      }
+ 382          
+ 383          /*********************************************************************************************************
+             -************
+ 384          ** Delay unit:ms
+ 385          **********************************************************************************************************
+             -***********/
+ 386          void Delay1ms(WORD byTime)
+ 387          {
+ 388   1              WORD i;
+ 389   1              for(i=0;i<byTime;i++)
+ 390   1              {
+ 391   2                      Delay1us(1000);
+ 392   2              }
+ 393   1      }
+ 394          
+ 395          
+ 396          /***********************************************************************
+ 397          ** 1ms interrupt serve function.
+ 398          ************************************************************************/
+ 399          SI_INTERRUPT (TIMER2_ISR, TIMER2_IRQn)//Timer2 use 1ms
+ 400          {
+ 401   1          bTimeFlag = TRUE; //1024us
+ 402   1          if(++w50msCnt >= 50)
+ 403   1              {
+ 404   2              w50msCnt = 0;
+ 405   2              b50msFlag = TRUE;
+ 406   2              }
+ 407   1          DetObj_RealTimeClock();
+ 408   1          TMR2CN0_TF2H = 0; //Clear interrupt flag
+C51 COMPILER V9.60.0.0   TIMER                                                             08/31/2020 09:15:07 PAGE 8   
+
+ 409   1      }
+ 410          
+ 411          /***********************************************************************
+ 412          ** 32ms interrupt serve function.
+ 413          ************************************************************************/
+ 414          SI_INTERRUPT (TIMER0_ISR, TIMER0_IRQn)//Timer0 use 64ms
+ 415          {
+ 416   1      
+ 417   1      }
+ 418          
+ 419          
+ 420          /***********************************************************************
+ 421          ** Timer4 Delay interrupt serve function.
+ 422          ************************************************************************/
+ 423          SI_INTERRUPT (TIMER4_ISR, TIMER4_IRQn)//Timer4 use delay
+ 424          {
+ 425   1          SFRPAGE_TEMP = SFRPAGE;
+ 426   1          SFRPAGE = 0x10;
+ 427   1              TMR4CN0_TF4H = 0;
+ 428   1          SFRPAGE = SFRPAGE_TEMP;
+ 429   1      }
+ 430          
+ 431          
+ 432          /***********************************************************************
+ 433          ** Timer3 Adc triger sampling interrupt serve function.
+ 434          ************************************************************************/
+ 435          SI_INTERRUPT (TIMER3_ISR, TIMER3_IRQn)//Timer3 use adc sampling
+ 436          {
+ 437   1          if(RawData.wRawDataIndex < (DETECT_BUFFER_LENGTH-1))
+ 438   1              RawData.wRawDataIndex++;
+ 439   1          TMR3CN0 &= (~0x80); //bit7; Clear interrupt flag
+ 440   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    801    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     10    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

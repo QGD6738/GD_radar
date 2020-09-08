@@ -1,0 +1,421 @@
+C51 COMPILER V9.53.0.0   ADC                                                               08/13/2020 11:08:40 PAGE 1   
+
+
+C51 COMPILER V9.53.0.0, COMPILATION OF MODULE ADC
+OBJECT MODULE PLACED IN .\src\Adc.OBJ
+COMPILER INVOKED BY: c:\SiliconLabs\SimplicityStudio\v4\developer\toolchains\keil_8051\9.53\BIN\C51.exe C:\Users\lzdd\De
+                    -sktop\m80\DFSK-F516-EFM8BB21F16G-C-QFN20\src\Adc.c OMF2 LARGE DEBUG OBJECTEXTEND ROM(LARGE) WARNINGLEVEL(2) FLOATFUZZY(3
+                    -) OPTIMIZE(8,SPEED) DEFINE(DEBUG=1) INTVECTOR(0X0000) INTPROMOTE INCDIR(C:\Users\lzdd\Desktop\m80\DFSK-F516-EFM8BB21F16G
+                    --C-QFN20\inc;C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/8051/v4.1.6//Device/shared/si8051base;C:/SiliconLabs/Simp
+                    -licityStudio/v4/developer/sdks/8051/v4.1.6//Device/EFM8BB2/inc) PRINT(.\src\Adc.lst) COND PAGEWIDTH(120) PAGELENGTH(65) 
+                    -OBJECT(.\src\Adc.OBJ)
+
+line level    source
+
+   1          #include "cpu.h"
+   2          /*********************************************************************************************************
+             -************
+   3          ** FILE NAME: Adc.c
+   4          **
+   5          ** PROJECT:  长城H2倒车雷达
+   6          ** CPU:      EFM8BB21F16G
+   7          ** COMPILER: 芯科
+   8          ** -------------------------------------------------------------------------------------------------------
+             -------------
+   9          ** VERSION:  V1.0
+  10          ** DATE:     2018.12.24
+  11          **********************************************************************************************************
+             -***********/
+  12          
+  13          #include "ADC.h"
+  14          #include "Command.h"
+  15          #include "Timer.h"
+  16          #include "DetectObj.h"
+  17          #include "Serial.h"
+  18          #include "Timer.h"
+  19          
+  20          BYTE    xdata   bySampleTimes;  //Remainning sample times
+  21          WORD    xdata   wSampleValue;   //AD value
+  22          WORD    xdata   wPowerValue;    //Power value
+  23          BOOL    xdata   bRadar_PoweFlag;
+  24          BOOL    xdata   bWorkFlag;      //Work flag
+  25          BOOL    xdata   bDetectFlag;    //Detect flag
+  26          stADC   xdata   ADC;
+  27          
+  28          WORD RL_MIN_VALUE;      // GND
+  29          WORD RL_MAX_VALUE;
+  30          
+  31          WORD RML_MIN_VALUE;     // +12V
+  32          WORD RML_MAX_VALUE;
+  33          
+  34          WORD RR_MIN_VALUE;      // NC
+  35          WORD RR_MAX_VALUE;
+  36          
+  37          WORD FL_MIN_VALUE;      // GND
+  38          WORD FL_MAX_VALUE;
+  39          
+  40          WORD FR_MIN_VALUE;      // NC
+  41          WORD FR_MAX_VALUE;
+  42          
+  43          void ADC_InitVariable(void)
+  44          {
+  45   1              bySampleTimes = 0;
+  46   1              wSampleValue  = 0;
+  47   1              wPowerValue   = 0;
+  48   1              bWorkFlag     = TRUE;
+C51 COMPILER V9.53.0.0   ADC                                                               08/13/2020 11:08:40 PAGE 2   
+
+  49   1              bDetectFlag       = 0;
+  50   1      }
+  51          /*********************************************************************************************************
+             -************
+  52          ** Init ADC.
+  53          **********************************************************************************************************
+             -***********/
+  54          void ADC_PowerSamplingInit(void)
+  55          {
+  56   1              ADC0CN0_ADBMEN  = 0;    //Disable Burst Mode
+  57   1              ADC0CN0_ADCM0   = 0;    //ADC0 conversion initiated is software triggerr
+  58   1              ADC0CN0_ADCM1   = 0;
+  59   1              ADC0CN1                 = 0x01; //Common Mode Buffer Enable
+  60   1              ADC0CF                  = 0x19; /*bit7/6/5/4/3 = 00011 is set clock,49/(3+1) = 12.25mhz
+  61   1                                                                bit2 = 0 is set 10 bit mode
+  62   1                                                                bit1 = 0 Selects between Normal Tracking Modes
+  63   1                                                                bit1 = 1 Gain Control set to 1 or 0.5
+  64   1                                                              */
+  65   1              ADC0AC                  = 0x42; /*bit7 = 0 Disable 12-bit mode
+  66   1                                                                bit6 = 1 ADC0H:ADC0L contain the accumulated conversion results when Burst Mode is disabled. Firm
+             -ware must write 0x0000 to ADC0H:ADC0L to clear the accumulated result.
+  67   1                                                                bit5/4/3 = 000 Right justified. No shifting applied
+  68   1                                                                bit2/1/0 = 010 Perform and Accumulate 8 conversions (2 conversions in 12-bit mode).
+  69   1                                                              */
+  70   1              ADC0PWR                 = 0x40; /*bit7/6 = 01 Select bias current mode 1 (SARCLK <= 16 MHz).
+  71   1                                                                bit5 = 0 Low power mode disabled
+  72   1                                                                bit4 = 0 Disable low power mode
+  73   1                                                                bit2/1/0 = 000 This field sets the time delay allowed for the ADC to power up from a low power st
+             -ate. When ADTM is set, an additional 4SARCLKs are added to this time
+  74   1                                                              */
+  75   1              ADC0TK                  = 0x00; //no use
+  76   1              ADC0GTH                 = 0xFF;
+  77   1              ADC0GTL                 = 0xFF;
+  78   1              ADC0LTH                 = 0x00;
+  79   1              ADC0LTL                 = 0x00;
+  80   1              ADC0MX                  = 0x03; //Selects the channel P0.0-P1.6 == 00000-01110
+  81   1              REF0CN                  = 0x08; /*bit7 = 0 The internal reference operates at 1.65 V nominal; 1 is 2.4v
+  82   1                                                                bit6 = 0 Reserved
+  83   1                                                                bit5 = 0 The ADC0 ground reference is the GND pin
+  84   1                                                                bit4/3 = 01 The ADC0 voltage reference is the VDD pin
+  85   1                                                                bit2 = 0 Disable the Temperature Sensor
+  86   1                                                                bit1/0 = 00 Reserved
+  87   1                                                              */
+  88   1              ADC0                    = 0x0000;       //Clear the accumulated conversion results
+  89   1              ADC0CN0_ADEN    = 1;            //ADC Enable
+  90   1              EIE1               &= (~0x08);  //Disable interrupt
+  91   1      
+  92   1      }
+  93          
+  94          void ADC_IDSamplingInit (void)
+  95          {
+  96   1              ADC0CN0_ADBMEN  = 0;    //Disable Burst Mode
+  97   1              ADC0CN0_ADCM0   = 0;    //ADC0 conversion initiated is software triggerr
+  98   1              ADC0CN0_ADCM1   = 0;
+  99   1              ADC0CN1                 = 0x01; //Common Mode Buffer Enable
+ 100   1              ADC0CF                  = 0x19; /*bit7/6/5/4/3 = 00011 is set clock,49/(3+1) = 12.25mhz
+ 101   1                                                                bit2 = 0 is set 10 bit mode
+ 102   1                                                                bit1 = 0 Selects between Normal Tracking Modes
+ 103   1                                                                bit1 = 1 Gain Control set to 1 or 0.5
+ 104   1                                                              */
+ 105   1              ADC0AC                  = 0x42; /*bit7 = 0 Disable 12-bit mode
+ 106   1                                                                bit6 = 1 ADC0H:ADC0L contain the accumulated conversion results when Burst Mode is disabled. Firm
+             -ware must write 0x0000 to ADC0H:ADC0L to clear the accumulated result.
+C51 COMPILER V9.53.0.0   ADC                                                               08/13/2020 11:08:40 PAGE 3   
+
+ 107   1                                                                bit5/4/3 = 000 Right justified. No shifting applied
+ 108   1                                                                bit2/1/0 = 010 Perform and Accumulate 8 conversions (2 conversions in 12-bit mode).
+ 109   1                                                              */
+ 110   1              ADC0PWR                 = 0x40; /*bit7/6 = 01 Select bias current mode 1 (SARCLK <= 16 MHz).
+ 111   1                                                                bit5 = 0 Low power mode disabled
+ 112   1                                                                bit4 = 0 Disable low power mode
+ 113   1                                                                bit2/1/0 = 000 This field sets the time delay allowed for the ADC to power up from a low power st
+             -ate. When ADTM is set, an additional 4SARCLKs are added to this time
+ 114   1                                                              */
+ 115   1              ADC0TK                  = 0x00; //no use
+ 116   1              ADC0GTH                 = 0xFF;
+ 117   1              ADC0GTL                 = 0xFF;
+ 118   1              ADC0LTH                 = 0x00;
+ 119   1              ADC0LTL                 = 0x00;
+ 120   1              ADC0MX                  = 0x05; //Selects the channel P0.0-P1.6 == 00000-01110
+ 121   1              REF0CN                  = 0x08; /*bit7 = 0 The internal reference operates at 1.65 V nominal; 1 is 2.4v
+ 122   1                                                                bit6 = 0 Reserved
+ 123   1                                                                bit5 = 0 The ADC0 ground reference is the GND pin
+ 124   1                                                                bit4/3 = 01 The ADC0 voltage reference is the VDD pin
+ 125   1                                                                bit2 = 0 Disable the Temperature Sensor
+ 126   1                                                                bit1/0 = 00 Reserved
+ 127   1                                                              */
+ 128   1              ADC0                    = 0x0000;       //Clear the accumulated conversion results
+ 129   1              ADC0CN0_ADEN    = 1;            //ADC Enable
+ 130   1              EIE1               &= (~0x08);  //Disable interrupt
+ 131   1      
+ 132   1      }
+ 133          
+ 134          void ADC_CALUE(void)
+ 135          {
+ 136   1          ADC0 = 0;//Clear the accumulated conversion results
+ 137   1          for(bySampleTimes=0; bySampleTimes<8; bySampleTimes++)
+ 138   1          {
+ 139   2              ADC0CN0_ADINT = 0;      //Clear interrupt flag;
+ 140   2              ADC0CN0_ADBUSY = 1;     //Start adc convert
+ 141   2                      Delay1us(5);
+ 142   2          }
+ 143   1          wSampleValue = ADC0;
+ 144   1          ADC_Stop();
+ 145   1          wSampleValue = wSampleValue>>3;
+ 146   1      }
+ 147          
+ 148          void ADC_PowerSample(void)
+ 149          {
+ 150   1              ADC_PowerSamplingInit();
+ 151   1          ADC_CALUE();
+ 152   1          ADC.Power_SampleValue = wSampleValue;
+ 153   1          ADC_IDSamplingInit();
+ 154   1          ADC_CALUE();
+ 155   1          ADC.ID_SampleValue = wSampleValue;
+ 156   1      
+ 157   1          if((ADC.Power_SampleValue <= MAX_POWER_VOLTAGE && ADC.Power_SampleValue >= MIN_POWER_VOLTAGE) ||
+ 158   1             (ADC.ID_SampleValue <= MAX_POWER_VOLTAGE    && ADC.ID_SampleValue >= MIN_POWER_VOLTAGE)  )
+ 159   1          {
+ 160   2              ADC.Power_OK_Flag = TRUE;
+ 161   2          }
+ 162   1          else
+ 163   1          {
+ 164   2              ADC.Power_OK_Flag = FALSE;
+ 165   2          }
+ 166   1      
+ 167   1      //    wPowerValue = MAX_COMPARE(ADC.Power_SampleValue,ADC.ID_SampleValue);
+ 168   1      
+C51 COMPILER V9.53.0.0   ADC                                                               08/13/2020 11:08:40 PAGE 4   
+
+ 169   1      
+ 170   1      
+ 171   1      }
+ 172          void ADC_IDSample(void)
+ 173          {
+ 174   1              ADC_IDSamplingInit();
+ 175   1          ADC_CALUE();
+ 176   1          ADC.ID_SampleValue = wSampleValue;
+ 177   1      }
+ 178          
+ 179          void ADC_ReadID(void)
+ 180          {
+ 181   1              WORD temp;
+ 182   1      //      DATA_HIGH;
+ 183   1      //      wTimeMs = 10;
+ 184   1      //      Delay1ms();
+ 185   1      //      while(!ADC.Power_OK_Flag)
+ 186   1      //      {
+ 187   1      //              ADC_PowerSample();CLR_WDT;
+ 188   1      //      }
+ 189   1              ADC_PowerSamplingInit();
+ 190   1              ADC_CALUE();
+ 191   1              ADC.Power_SampleValue = wSampleValue;
+ 192   1          ADC_IDSamplingInit();
+ 193   1          ADC_CALUE();
+ 194   1          ADC.ID_SampleValue = wSampleValue;
+ 195   1      
+ 196   1              //Judge ID code...
+ 197   1      //      test code
+ 198   1      //      ADC.PowerValueTest     = (WORD)((((DWORD)ADC.Power_SampleValue*3300)/1024)*6);
+ 199   1      //      ADC.PowerValueSiteTest = (WORD)(((DWORD)ADC.Power_SampleValue*3300)/1024);
+ 200   1      //      ADC.IDValueTest        = (WORD)((((DWORD)ADC.ID_SampleValue*3300)/1024)*6);
+ 201   1      //      ADC.IDValueSiteTest    = (WORD)(((DWORD)ADC.ID_SampleValue*3300)/1024);
+ 202   1      
+ 203   1          RL_MIN_VALUE = 0;      // GND
+ 204   1              RL_MAX_VALUE = 200;//150;//100;
+ 205   1      
+ 206   1      //      RML_MIN_VALUE = (WORD)(((DWORD)wPowerValue*83 )/100);//(WORD)(wPowerValue-20); // +12V
+ 207   1      //      RML_MAX_VALUE = (WORD)(((DWORD)wPowerValue*117)/100);
+ 208   1      
+ 209   1              temp = (WORD)(((DWORD)ADC.Power_SampleValue*(P_R1VALUE+P_R2VALUE)/P_R1VALUE*R1VALUE/(R1VALUE+R2VALUE+R3VA
+             -LUE)*117 )/100); //117 NC+17%
+ 210   1              if(temp > 1000)
+ 211   1              {
+ 212   2                      temp = 1000;
+ 213   2              }
+ 214   1      
+ 215   1              RML_MIN_VALUE = temp;  // +12V
+ 216   1              RML_MAX_VALUE = 1024;//(WORD)(((DWORD)wPowerValue*33/1024*R1VALUE/(R1VALUE+R2VALUE)*117)/100);
+ 217   1      
+ 218   1              //RMR_LOW_MIN_VALUE = 0;        // DATA_LOW
+ 219   1              //RMR_LOW_MAX_VALUE = 300;
+ 220   1      
+ 221   1              RR_MIN_VALUE = RL_MAX_VALUE;//100; // NC
+ 222   1              RR_MAX_VALUE = (WORD)(((DWORD)ADC.Power_SampleValue*(P_R1VALUE+P_R2VALUE)/P_R1VALUE*R1VALUE/(R1VALUE+R2VA
+             -LUE+R3VALUE)*83 )/100);
+ 223   1                                              //(WORD)(((DWORD)ADC.Power_SampleValue*33/1024*R1VALUE/(R1VALUE+R2VALUE+R3VALUE)*83 )/100);
+ 224   1      
+ 225   1      //    FL_MIN_VALUE = 0; // GND
+ 226   1      //    FL_MAX_VALUE = 100;
+ 227   1      //
+ 228   1      //    FR_MIN_VALUE = 100; // NC
+ 229   1      //    FR_MAX_VALUE = (WORD)(((DWORD)ADC.Power_SampleValue*83 )/100);//WORD)((wPowerValue*6)/8-24+100);
+C51 COMPILER V9.53.0.0   ADC                                                               08/13/2020 11:08:40 PAGE 5   
+
+ 230   1      
+ 231   1              if(ADC.ID_SampleValue >= RL_MIN_VALUE && ADC.ID_SampleValue < RL_MAX_VALUE)
+ 232   1              {
+ 233   2                      DetInfo.bID  = ID_RL;   //GND
+ 234   2              }
+ 235   1              /*
+ 236   1              if(ADC.ID_SampleValue > RR_MIN_VALUE && ADC.ID_SampleValue < RR_MAX_VALUE)
+ 237   1              {
+ 238   1                      DetInfo.bID  = ID_RR;   //NC
+ 239   1              }
+ 240   1              */
+ 241   1              if(ADC.ID_SampleValue > RML_MIN_VALUE && ADC.ID_SampleValue < RML_MAX_VALUE)
+ 242   1              {
+ 243   2                      wTimeMs = 10;
+ 244   2                      Delay1ms(1);
+ 245   2                      DATA_LOW;
+ 246   2                      wTimeMs = 10;
+ 247   2                      Delay1ms(1);
+ 248   2                      //ADC_IDSample();
+ 249   2                      /*
+ 250   2                      if(ADC.ID_SampleValue > RMR_LOW_MIN_VALUE && ADC.ID_SampleValue < RMR_LOW_MAX_VALUE)
+ 251   2                      {
+ 252   2                              DetInfo.bID  = ID_RMR;
+ 253   2                      }
+ 254   2                      */
+ 255   2                      if(ADC.ID_SampleValue > RML_MIN_VALUE && ADC.ID_SampleValue < RML_MAX_VALUE)
+ 256   2                      {
+ 257   3                              DetInfo.bID  = ID_RML;
+ 258   3                      }
+ 259   2              }
+ 260   1              DATA_HIGH;
+ 261   1      }
+ 262          
+ 263          
+ 264          
+ 265          void ADC_Start(void)
+ 266          {
+ 267   1              ADC0CN0_ADINT = 0;      //Clear interrupt flag;
+ 268   1              ADC0CN0_ADBUSY = 1;     //Start adc convert
+ 269   1              ADC0CN0_ADEN = 1;       //ADC Enable
+ 270   1              bDetectFlag = TRUE;
+ 271   1      }
+ 272          
+ 273          void ADC_Stop(void)
+ 274          {
+ 275   1              ADC0CN0_ADBUSY = 0;     //Stop adc convert
+ 276   1              ADC0CN0_ADEN = 0;       //ADC Disable
+ 277   1              bDetectFlag = FALSE;
+ 278   1      }
+ 279          
+ 280          
+ 281          void ADC_InitDetect(void)
+ 282          {
+ 283   1              ADC0CN0_ADBMEN  = 0;    //Disable Burst Mode
+ 284   1              ADC0CN0_ADCM0   = 0;    //ADC0 conversion initiated is software triggerr
+ 285   1              ADC0CN0_ADCM1   = 0;
+ 286   1              ADC0CN1                 = 0x01; //Common Mode Buffer Enable
+ 287   1              ADC0CF                  = 0x1D; /*bit7/6/5/4/3 = 00011 is set clock,49/(3+1) = 12.25mhz
+ 288   1                                                                bit2 = 1 is set 8 bit mode
+ 289   1                                                                bit1 = 0 Selects between Normal Tracking Modes
+ 290   1                                                                bit1 = 1 Gain Control set to 1 or 0.5
+ 291   1                                                              */
+ 292   1              ADC0AC                  = 0x10; /*bit7 = 0 Disable 12-bit mode
+C51 COMPILER V9.53.0.0   ADC                                                               08/13/2020 11:08:40 PAGE 6   
+
+ 293   1                                                                bit6 = 0 ADC0H:ADC0L contain the result of the latest conversion
+ 294   1                                                                bit5/4/3 = 010 Right justified. No shifting applied;(*this is 10 bit set way)
+ 295   1                                                                bit2/1/0 = 000 Perform and Accumulate 1 conversion (not used in 12-bit mode).
+ 296   1                                                              */
+ 297   1              ADC0PWR                 = 0x40; /*bit7/6 = 01 Select bias current mode 1 (SARCLK <= 16 MHz).
+ 298   1                                                                bit5 = 0 Low power mode disabled
+ 299   1                                                                bit4 = 0 Disable low power mode
+ 300   1                                                                bit2/1/0 = 000 This field sets the time delay allowed for the ADC to power up from a low power st
+             -ate. When ADTM is set, an additional 4SARCLKs are added to this time
+ 301   1                                                              */
+ 302   1              ADC0TK                  = 0x00; //no use
+ 303   1              ADC0GTH                 = 0xFF;
+ 304   1              ADC0GTL                 = 0xFF;
+ 305   1              ADC0LTH                 = 0x00;
+ 306   1              ADC0LTL                 = 0x00;
+ 307   1              ADC0MX                  = 0x06; //Selects the channel P0.0-P1.6 == 00000-01110
+ 308   1              REF0CN                  = 0x08; /*bit7 = 0 The internal reference operates at 1.65 V nominal; 1 is 2.4v
+ 309   1                                                                bit6 = 0 Reserved
+ 310   1                                                                bit5 = 0 The ADC0 ground reference is the GND pin
+ 311   1                                                                bit4/3 = 01 The ADC0 voltage reference is the VDD pin
+ 312   1                                                                bit2 = 0 Disable the Temperature Sensor
+ 313   1                                                                bit1/0 = 00 Reserved
+ 314   1                                                              */
+ 315   1              EIE1               |= ( 0x08); //10; Set Interrupt Priority; 11 is highest; 00 is lowest;
+ 316   1              EIP1               &= (~0x08);
+ 317   1              EIP1H              |= 0x08; //Enable interrupt
+ 318   1              ADC0CN0_ADEN    = 1;    //ADC Enable
+ 319   1          ADC_Start();
+ 320   1      }
+ 321          
+ 322          /*********************************************************************************************************
+             -************
+ 323          ** AD interrupt.
+ 324          **********************************************************************************************************
+             -***********/
+ 325          SI_INTERRUPT (ADC_ISR, ADC0EOC_IRQn)
+ 326          {
+ 327   1          if(RawData.bAdcBfIndex < 7)
+ 328   1          {
+ 329   2              RawData.bAdcBuffer[RawData.bAdcBfIndex] = ADC0L;
+ 330   2              RawData.bAdcBfIndex++;
+ 331   2          }
+ 332   1          else
+ 333   1          {
+ 334   2              BYTE i;
+ 335   2              BYTE Max = 0x00;
+ 336   2              BYTE Min = 0xFF;
+ 337   2              RawData.bAdcBuffer[RawData.bAdcBfIndex] = ADC0L;
+ 338   2              RawData.bAdcBfIndex = 0;
+ 339   2                      for(i=0; i<8;i++)       //Calculate  8 buffer = 6.5us, and samling use 24us; total is 32us
+ 340   2                      {
+ 341   3                              if(Max < RawData.bAdcBuffer[i])
+ 342   3                                      Max = RawData.bAdcBuffer[i];
+ 343   3                              if(Min > RawData.bAdcBuffer[i])
+ 344   3                                      Min = RawData.bAdcBuffer[i];
+ 345   3                      }
+ 346   2                      RawData.bRawDataBuffer[RawData.wRawDataIndex] = Max - Min;
+ 347   2          }
+ 348   1          ADC0CN0_ADINT       = 0;    //Clear interrupt flag;
+ 349   1          ADC0CN0_ADBUSY      = 1;    //Start adc convert
+ 350   1      }
+ 351          
+ 352          /*********************************************************************************************************
+C51 COMPILER V9.53.0.0   ADC                                                               08/13/2020 11:08:40 PAGE 7   
+
+             -************
+ 353          ** AD window interrupt.
+ 354          **********************************************************************************************************
+             -***********/
+ 355          
+ 356          SI_INTERRUPT (ADC_WINDOW_ISR, ADC0WC_IRQn)
+ 357          {
+ 358   1              ADC0CN0_ADWINT = 0;//Clear interrupt flag;
+ 359   1      }
+ 360          
+ 361          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    952    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     41       3
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

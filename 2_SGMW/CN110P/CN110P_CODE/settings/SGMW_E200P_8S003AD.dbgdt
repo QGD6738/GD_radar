@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<Project>
+  <Desktop>
+    <Static>
+      <Debug-Log>
+        
+        
+      <ColumnWidth0>20</ColumnWidth0><ColumnWidth1>1307</ColumnWidth1></Debug-Log>
+      <Build>
+        <ColumnWidth0>20</ColumnWidth0>
+        <ColumnWidth1>980</ColumnWidth1>
+        <ColumnWidth2>261</ColumnWidth2>
+        <ColumnWidth3>65</ColumnWidth3>
+      </Build>
+      <Workspace>
+        <ColumnWidths>
+          
+          
+          
+          
+        <Column0>361</Column0><Column1>27</Column1><Column2>27</Column2><Column3>27</Column3></ColumnWidths>
+      </Workspace>
+      <Disassembly>
+        <col-names>
+          
+          
+        <item>Disassembly</item><item>_I0</item></col-names>
+        <col-widths>
+          
+          
+        <item>500</item><item>20</item></col-widths>
+        <DisasmHistory/>
+        
+        
+      <PreferedWindows><Position>2</Position><ScreenPosX>0</ScreenPosX><ScreenPosY>0</ScreenPosY><Windows><Window><Factory>StaticWatch</Factory></Window></Windows></PreferedWindows><ShowCodeCoverage>1</ShowCodeCoverage><ShowInstrProfiling>1</ShowInstrProfiling></Disassembly>
+      <WATCH_1>
+        <expressions>
+          
+          
+        <item>NearestData</item><item>PowerValue</item><item>SampValue</item><item>Cmd.bSelfCheckResult</item><item>DiagInfo</item><item>Cmd</item><item>NearestData</item><item>PowerValue</item><item/></expressions>
+        <col-names>
+          
+          
+          
+          
+        <item>Expression</item><item>Location</item><item>Type</item><item>Value</item></col-names>
+        <col-widths>
+          
+          
+          
+          
+        <item>189</item><item>150</item><item>100</item><item>100</item></col-widths>
+      <PreferedWindows><Position>2</Position><ScreenPosX>0</ScreenPosX><ScreenPosY>0</ScreenPosY><Windows><Window><Factory>Disassembly</Factory></Window><Window><Factory>StaticWatch</Factory></Window><Window><Factory>Locals</Factory></Window></Windows></PreferedWindows></WATCH_1>
+      <StaticWatch>
+        <expressions>
+          
+          
+          
+          
+        <item>NearestData</item><item>SpkInfo</item><item>DiagInfo</item><item>NearestData.bEachNearestDistance</item><item>CmpData</item><item>RawData</item><item>DetInfo</item><item>Cmd</item><item>SampValue</item><item>RR_MIN_VALUE</item><item>RR_MAX_VALUE</item><item/></expressions>
+        <col-names>
+          
+          
+          
+          
+        <item>Expression</item><item>Location</item><item>Type</item><item>Value</item></col-names>
+        <col-widths>
+          
+          
+          
+          
+        <item>190</item><item>150</item><item>100</item><item>191</item></col-widths>
+      <PreferedWindows><Position>2</Position><ScreenPosX>0</ScreenPosX><ScreenPosY>0</ScreenPosY><Windows><Window><Factory>Disassembly</Factory></Window></Windows></PreferedWindows></StaticWatch>
+      <Locals>
+        <col-names>
+          <item>Location</item>
+          <item>Type</item>
+          <item>Value</item>
+          <item>Variable</item>
+        </col-names>
+        <col-widths>
+          <item>150</item>
+          <item>100</item>
+          <item>100</item>
+          <item>100</item>
+        </col-widths>
+      <PreferedWindows><Position>2</Position><ScreenPosX>0</ScreenPosX><ScreenPosY>0</ScreenPosY><Windows><Window><Factory>Disassembly</Factory></Window><Window><Factory>WATCH_1</Factory></Window><Window><Factory>StaticWatch</Factory></Window></Windows></PreferedWindows></Locals>
+    <Find-in-Files><ColumnWidth0>470</ColumnWidth0><ColumnWidth1>67</ColumnWidth1><ColumnWidth2>806</ColumnWidth2></Find-in-Files><QuickWatch><PreferedWindows><Position>2</Position><ScreenPosX>0</ScreenPosX><ScreenPosY>0</ScreenPosY><Windows><Window><Factory>StaticWatch</Factory></Window></Windows></PreferedWindows><col-names><item>Expression</item><item>Location</item><item>Type</item><item>Value</item></col-names><col-widths><item>100</item><item>150</item><item>100</item><item>100</item></col-widths><QWatchHistory/></QuickWatch></Static>
+    <Windows>
+      
+      
+      
+    <Wnd2>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-768-6622</Identity>
+            <TabName>Debug Log</TabName>
+            <Factory>Debug-Log</Factory>
+            <Session/>
+          </Tab>
+          <Tab>
+            <Identity>TabID-246-6632</Identity>
+            <TabName>Build</TabName>
+            <Factory>Build</Factory>
+            <Session/>
+          </Tab>
+        <Tab><Identity>TabID-10138-31284</Identity><TabName>Find in Files</TabName><Factory>Find-in-Files</Factory><Session/></Tab></Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd2><Wnd4>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-11517-6626</Identity>
+            <TabName>Workspace</TabName>
+            <Factory>Workspace</Factory>
+            <Session>
+              
+            <NodeDict><ExpandedNode>SGMW_E200P_8S003AD</ExpandedNode><ExpandedNode>SGMW_E200P_8S003AD/INC</ExpandedNode><ExpandedNode>SGMW_E200P_8S003AD/SRC</ExpandedNode></NodeDict></Session>
+          </Tab>
+        </Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd4><Wnd5><Tabs><Tab><Identity>TabID-22334-1123</Identity><TabName>Live Watch</TabName><Factory>StaticWatch</Factory></Tab><Tab><Identity>TabID-30006-7660</Identity><TabName>Disassembly</TabName><Factory>Disassembly</Factory><Session/></Tab></Tabs><SelectedTab>0</SelectedTab></Wnd5></Windows>
+    <Editor>
+      
+      
+      
+      
+    <Pane><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\SRC\Timer.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>140</YPos2><SelStart2>6930</SelStart2><SelEnd2>6930</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\SRC\Speaker.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>82</YPos2><SelStart2>3510</SelStart2><SelEnd2>3510</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\SRC\DetectObj.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>101</YPos2><SelStart2>4288</SelStart2><SelEnd2>4288</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\SRC\Command.h</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>0</YPos2><SelStart2>551</SelStart2><SelEnd2>563</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\SRC\Command.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>309</YPos2><SelStart2>8952</SelStart2><SelEnd2>8952</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\SRC\speaker.h</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>0</YPos2><SelStart2>347</SelStart2><SelEnd2>347</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\SRC\Adc.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>84</YPos2><SelStart2>3536</SelStart2><SelEnd2>3536</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\SRC\DetectObj.h</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>35</YPos2><SelStart2>2099</SelStart2><SelEnd2>2099</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\SRC\Cpu.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>39</YPos2><SelStart2>1624</SelStart2><SelEnd2>1624</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\SRC\ReadID.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>1</YPos2><SelStart2>392</SelStart2><SelEnd2>392</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\SRC\main.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>4</YPos2><SelStart2>690</SelStart2><SelEnd2>690</SelEnd2></Tab><ActiveTab>10</ActiveTab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\N350P\changeBuzzer\2\1_SGMW_E100_8S003AD\SRC\main.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>12</YPos2><SelStart2>690</SelStart2><SelEnd2>690</SelEnd2></Tab></Pane><ActivePane>0</ActivePane><Sizes><Pane><X>1000000</X><Y>1000000</Y></Pane></Sizes><SplitMode>1</SplitMode></Editor>
+    <Positions>
+      
+      
+      
+      
+      
+    <Top><Row0><Sizes><Toolbar-05253878><key>iaridepm.enu1</key></Toolbar-05253878></Sizes></Row0><Row1><Sizes><Toolbar-0528ee60><key>debuggergui.enu1</key></Toolbar-0528ee60></Sizes></Row1><Row2><Sizes/></Row2></Top><Left><Row0><Sizes><Wnd4><Rect><Top>-2</Top><Left>-2</Left><Bottom>639</Bottom><Right>435</Right><x>-2</x><y>-2</y><xscreen>281</xscreen><yscreen>291</yscreen><sizeHorzCX>146354</sizeHorzCX><sizeHorzCY>291876</sizeHorzCY><sizeVertCX>227604</sizeVertCX><sizeVertCY>642929</sizeVertCY></Rect></Wnd4></Sizes></Row0></Left><Right><Row0><Sizes><Wnd5><Rect><Top>-2</Top><Left>-2</Left><Bottom>639</Bottom><Right>520</Right><x>-2</x><y>-2</y><xscreen>281</xscreen><yscreen>291</yscreen><sizeHorzCX>146354</sizeHorzCX><sizeHorzCY>291876</sizeHorzCY><sizeVertCX>271875</sizeVertCX><sizeVertCY>642929</sizeVertCY></Rect></Wnd5></Sizes></Row0></Right><Bottom><Row0><Sizes><Wnd2><Rect><Top>-2</Top><Left>-2</Left><Bottom>289</Bottom><Right>1922</Right><x>-2</x><y>-2</y><xscreen>1924</xscreen><yscreen>291</yscreen><sizeHorzCX>1002083</sizeHorzCX><sizeHorzCY>291876</sizeHorzCY><sizeVertCX>146354</sizeVertCX><sizeVertCY>291876</sizeVertCY></Rect></Wnd2></Sizes></Row0></Bottom><Float><Sizes/></Float></Positions>
+  </Desktop>
+</Project>
+
+

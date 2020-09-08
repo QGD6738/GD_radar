@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project>
+  <fileVersion>2</fileVersion>
+  <fileChecksum>3031315604</fileChecksum>
+  <configuration>
+    <name>Debug</name>
+    <outputs>
+      <file>$PROJ_DIR$\SRC\Command.h</file>
+      <file>$PROJ_DIR$\SRC\Cpu.h</file>
+      <file>$PROJ_DIR$\SRC\ADC.h</file>
+      <file>$PROJ_DIR$\SRC\Config.h</file>
+      <file>$PROJ_DIR$\SRC\Serial.h</file>
+      <file>$PROJ_DIR$\Debug\Obj\main.pbi</file>
+      <file>$PROJ_DIR$\SRC\Cpu.c</file>
+      <file>$PROJ_DIR$\Debug\Obj\ReadID.pbi</file>
+      <file>$PROJ_DIR$\SGMW_E300_8S003_V0_2.txt</file>
+      <file>$PROJ_DIR$\Debug\Obj\Adc.o</file>
+      <file>$TOOLKIT_DIR$\inc\io_macros.h</file>
+      <file>$PROJ_DIR$\SRC\Command.c</file>
+      <file>$PROJ_DIR$\SRC\Timer.c</file>
+      <file>$PROJ_DIR$\Debug\Obj\Timer.pbi</file>
+      <file>$PROJ_DIR$\Debug\Obj\Timer.o</file>
+      <file>$PROJ_DIR$\SRC\DetectObj.c</file>
+      <file>$PROJ_DIR$\SRC\ReadID.c</file>
+      <file>$PROJ_DIR$\SRC\Serial.c</file>
+      <file>$PROJ_DIR$\SRC\ReadID.h</file>
+      <file>$PROJ_DIR$\SRC\Speaker.c</file>
+      <file>$PROJ_DIR$\SRC\main.c</file>
+      <file>$PROJ_DIR$\SRC\speaker.h</file>
+      <file>$PROJ_DIR$\SRC\Timer.h</file>
+      <file>$PROJ_DIR$\SRC\DetectObj.h</file>
+      <file>$TOOLKIT_DIR$\lib\dbgstm8mmd.a</file>
+      <file>$TOOLKIT_DIR$\lib\dlstm8mmn.a</file>
+      <file>$PROJ_DIR$\Debug\Obj\Speaker.pbi</file>
+      <file>$PROJ_DIR$\SRC\Adc.c</file>
+      <file>$TOOLKIT_DIR$\config\lnkstm8s003f3.icf</file>
+      <file>$PROJ_DIR$\Debug\Obj\Adc.pbi</file>
+      <file>$PROJ_DIR$\Debug\Obj\ReadID.o</file>
+      <file>$PROJ_DIR$\Debug\Obj\Cpu.pbi</file>
+      <file>$PROJ_DIR$\Debug\Obj\DetectObj.o</file>
+      <file>$PROJ_DIR$\Debug\Obj\DetectObj.pbi</file>
+      <file>$PROJ_DIR$\Debug\Obj\Speaker.o</file>
+      <file>$PROJ_DIR$\Debug\Obj\Command.o</file>
+      <file>$PROJ_DIR$\Debug\Obj\main.o</file>
+      <file>$TOOLKIT_DIR$\inc\iostm8s003f3.h</file>
+      <file>$PROJ_DIR$\Debug\Exe\SGMW_E300_PAS_ALL_V0_0_4_200824.hex</file>
+      <file>$PROJ_DIR$\Debug\Obj\Cpu.o</file>
+      <file>$PROJ_DIR$\Debug\Obj\SGMW_E200P_8S003AD.pbd</file>
+      <file>$PROJ_DIR$\Debug\Obj\Serial.pbi</file>
+      <file>$PROJ_DIR$\Debug\Obj\Serial.o</file>
+      <file>$PROJ_DIR$\Debug\Obj\Command.pbi</file>
+      <file>$PROJ_DIR$\Debug\Exe\templproj.out</file>
+    </outputs>
+    <file>
+      <name>$PROJ_DIR$\SRC\Cpu.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 31</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 39</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 1 37 10 3 2 22</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 1 37 10 3 2 22</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\Command.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 43</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 35</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 4 1 37 10 3 0 18 22 23 2 21</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 4 1 37 10 3 0 18 22 23 2 21</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\Timer.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 13</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 14</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 1 37 10 3 22 23 2 18</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 1 37 10 3 22 23 2 18</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\DetectObj.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 33</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 32</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 1 37 10 3 23 2 18 22 0 4 21</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 1 37 10 3 23 2 18 22 0 4 21</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\ReadID.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 7</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 30</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 1 37 10 3 2 22 4 18 23</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 1 37 10 3 2 22 4 18 23</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\Serial.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 41</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 42</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 4 1 37 10 3 0 18 23 2 22</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 4 1 37 10 3 0 18 23 2 22</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\Speaker.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 26</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 34</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 23 1 37 10 3 2 18 21 4 0</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 23 1 37 10 3 2 18 21 4 0</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\main.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 5</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 36</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 1 37 10 3 22 23 2 18 4 0 21</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 1 37 10 3 22 23 2 18 4 0 21</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\SRC\Adc.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 29</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 9</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 2 1 37 10 3 22 23 18</file>
+        </tool>
+        <tool>
+          <name>ICCSTM8</name>
+          <file> 2 1 37 10 3 22 23 18</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\Debug\Exe\templproj.out</name>
+      <outputs>
+        <tool>
+          <name>OBJCOPY</name>
+          <file> 38</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 28 9 35 39 32 30 42 34 14 36 25 24</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>[ROOT_NODE]</name>
+      <outputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 44</file>
+        </tool>
+      </outputs>
+    </file>
+  </configuration>
+  <configuration>
+    <name>Release</name>
+    <outputs/>
+    <forcedrebuild>
+      <name>[MULTI_TOOL]</name>
+      <tool>ILINK</tool>
+    </forcedrebuild>
+  </configuration>
+</project>
+
+
